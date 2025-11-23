@@ -7,10 +7,12 @@ export type Asset = {
 	name: string;
 	weight: number;
 	rawHistoricalData: string;
-	historicalData: HistoricalData[];
+	historicalData: HistoricalData[]; // daily
 	dailyReturns: number[];
 	annualExpectedReturn: number;
 	annualVolatility: number;
+	dailyAverageReturn: number;
+	dailyVolatility: number;
 };
 
 function cleanHistoricalData(historicalData: string): HistoricalData[] {
@@ -25,15 +27,24 @@ function cleanHistoricalData(historicalData: string): HistoricalData[] {
 		}));
 }
 
-function calculateDailyReturns(historicalData: HistoricalData[]) {
-	const dailyReturns = historicalData.map((data, index) => {
-		if (index === 0) return 0;
-		return (
-			(data.price - historicalData[index - 1].price) /
-			historicalData[index - 1].price
-		);
-	});
+function calculateMean(nums: number[]) {
+	return nums.reduce((acc, num) => acc + num, 0) / nums.length;
+}
 
+function calculateVolatility(returns: number[]) {
+	const mean = calculateMean(returns);
+	const variance =
+		returns.reduce((acc, ret) => acc + (ret - mean) ** 2, 0) /
+		(returns.length - 1);
+	return Math.sqrt(variance);
+}
+
+function calculateDailyReturns(prices: number[]) {
+	const dailyReturns = [];
+
+	for (let i = 1; i < prices.length; i++) {
+		dailyReturns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+	}
 	return dailyReturns;
 }
 
@@ -62,9 +73,14 @@ export function generateAsset(
 	historicalData: string
 ): Asset {
 	const cleanedHistoricalData = cleanHistoricalData(historicalData);
-	const dailyReturns = calculateDailyReturns(cleanedHistoricalData);
+	const dailyReturns = calculateDailyReturns(
+		cleanedHistoricalData.map((data) => data.price)
+	);
 	const annualExpectedReturn = calculateAnnualExpectedReturn(dailyReturns);
 	const annualVolatility = calculateAnnualVolatility(dailyReturns);
+
+	const dailyAverageReturn = calculateMean(dailyReturns);
+	const dailyVolatility = calculateVolatility(dailyReturns);
 
 	return {
 		name,
@@ -74,6 +90,8 @@ export function generateAsset(
 		dailyReturns,
 		annualExpectedReturn,
 		annualVolatility,
+		dailyAverageReturn,
+		dailyVolatility,
 	};
 }
 
@@ -86,34 +104,170 @@ function gaussianRandom() {
 	return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
-function normalRandomWithMeanStd(mean: number, std: number) {
-	return mean + std * gaussianRandom();
+function alignPrices(assetA: HistoricalData[], assetB: HistoricalData[]) {
+	const mapA = new Map(
+		assetA.map((data) => [
+			data.date.toISOString().split('T')[0],
+			{ date: data.date, price: data.price },
+		])
+	);
+	const mapB = new Map(
+		assetB.map((data) => [
+			data.date.toISOString().split('T')[0],
+			{ date: data.date, price: data.price },
+		])
+	);
+
+	const commonTimestamps = [...mapA.keys()].filter((timestamp) =>
+		mapB.has(timestamp)
+	);
+
+	const alignedPrices = commonTimestamps.map((timestamp) => {
+		const dataA = mapA.get(timestamp);
+		const dataB = mapB.get(timestamp);
+		if (!dataA || !dataB) throw new Error('Price data not found');
+
+		return { date: dataA.date, priceA: dataA.price, priceB: dataB.price };
+	});
+
+	return alignedPrices;
 }
 
-export function monteCarloSimulation(
-	assets: Asset[],
-	numSimulations: number,
-	numYears: number
-) {
-	const simulationResults = [];
-	for (let i = 0; i < numSimulations; i++) {
-		const simulation = [];
+function calculateCorrelation(x: number[], y: number[]) {
+	const n = x.length;
+	if (n !== y.length || n === 0) throw new Error('Invalid input lengths');
 
-		for (let j = 0; j < numYears; j++) {
-			let value = 0;
-			for (let k = 0; k < assets.length; k++) {
-				value +=
-					assets[k].weight *
-					normalRandomWithMeanStd(
-						assets[k].annualExpectedReturn,
-						assets[k].annualVolatility
-					);
-			}
-			simulation.push(value);
-		}
+	const meanX = x.reduce((a, b) => a + b, 0) / n;
+	const meanY = y.reduce((a, b) => a + b, 0) / n;
 
-		simulationResults.push(simulation);
+	let numerator = 0;
+	let denomX = 0;
+	let denomY = 0;
+
+	for (let i = 0; i < n; i++) {
+		const dx = x[i] - meanX;
+		const dy = y[i] - meanY;
+		numerator += dx * dy;
+		denomX += dx * dx;
+		denomY += dy * dy;
 	}
 
-	return simulationResults;
+	return numerator / Math.sqrt(denomX * denomY);
+}
+
+export function calculateCorrelationMatrix(assets: Asset[]) {
+	const correlationMatrix = [];
+
+	for (let i = 0; i < assets.length; i++) {
+		const row = [];
+		for (let j = 0; j < assets.length; j++) {
+			const alignedPrices = alignPrices(
+				assets[i].historicalData,
+				assets[j].historicalData
+			);
+
+			const returnsA = calculateDailyReturns(
+				alignedPrices.map((data) => data.priceA)
+			);
+			const returnsB = calculateDailyReturns(
+				alignedPrices.map((data) => data.priceB)
+			);
+			const correlation = calculateCorrelation(returnsA, returnsB);
+			row.push(correlation);
+		}
+		correlationMatrix.push(row);
+	}
+
+	return correlationMatrix;
+}
+
+function choleskyDecomposition(correlationMatrix: number[][]) {
+	const n = correlationMatrix.length;
+	const L = Array.from({ length: n }, () => Array(n).fill(0));
+
+	for (let i = 0; i < n; i++) {
+		for (let j = 0; j <= i; j++) {
+			let sum = 0;
+			for (let k = 0; k < j; k++) sum += L[i][k] * L[j][k];
+			if (i === j) {
+				L[i][j] = Math.sqrt(correlationMatrix[i][i] - sum);
+			} else {
+				L[i][j] = (correlationMatrix[i][j] - sum) / L[j][j];
+			}
+		}
+	}
+
+	return L;
+}
+
+function calculateCorrelatedRandom(choleskyMatrix: number[][]) {
+	const n = choleskyMatrix.length;
+	const random = Array(n)
+		.fill(0)
+		.map(() => gaussianRandom());
+	const correlated: number[] = Array(n).fill(0);
+
+	for (let i = 0; i < n; i++) {
+		let sum = 0;
+		for (let j = 0; j <= i; j++) {
+			sum += choleskyMatrix[i][j] * random[j];
+		}
+		correlated[i] = sum;
+	}
+
+	return correlated;
+}
+
+export function runSimulation(
+	assets: Asset[],
+	numOfYears: number,
+	numOfSimulation: number
+) {
+	const correlationMatrix = calculateCorrelationMatrix(assets);
+	const choleskyMatrix = choleskyDecomposition(correlationMatrix);
+
+	const TRADING_DAYS_PER_YEAR = 252;
+	const timeSteps = numOfYears * TRADING_DAYS_PER_YEAR;
+
+	const initialValue = 10000;
+	const portfolioPaths: number[][] = [];
+
+	for (let sim = 0; sim < numOfSimulation; sim++) {
+		let portfolioValue = initialValue;
+		const portfolioPath = [portfolioValue];
+
+		for (let t = 0; t < timeSteps; t++) {
+			const correlatedRandoms = calculateCorrelatedRandom(choleskyMatrix);
+
+			const equityReturns = correlatedRandoms.map((random, i) => {
+				// keep it here
+				// this is GBM drift adjusted
+				// return (
+				// 	Math.exp(
+				// 		assets[i].dailyAverageReturn -
+				// 			0.5 * assets[i].dailyVolatility ** 2 +
+				// 			assets[i].dailyVolatility * random
+				// 	) - 1
+				// );
+
+				return (
+					assets[i].dailyAverageReturn +
+					assets[i].dailyVolatility * random
+				);
+			});
+
+			let stepValue = 0;
+			for (let i = 0; i < assets.length; i++) {
+				stepValue +=
+					portfolioValue * assets[i].weight * (equityReturns[i] + 1);
+			}
+
+			portfolioValue = stepValue;
+			portfolioPath.push(portfolioValue);
+		}
+
+		portfolioPaths.push(portfolioPath);
+	}
+
+	return portfolioPaths;
 }

@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react';
-import { generateAsset, monteCarloSimulation, type Asset } from './lib';
-import { defaultAssets } from './defaultAssets';
+import {
+	calculateCorrelationMatrix,
+	generateAsset,
+	runSimulation,
+	type Asset,
+} from './lib';
+import { defaultAssets } from './data/defaultAssets';
 
 function App() {
 	const [numSimulations, setNumSimulations] = useState(100);
@@ -11,15 +16,21 @@ function App() {
 	const [rawHistoricalData, setRawHistoricalData] = useState('');
 	const [assets, setAssets] = useState<Asset[]>(defaultAssets);
 
+	const correlationMatrix = useMemo(
+		() => calculateCorrelationMatrix(assets),
+		[assets]
+	);
+
 	const totalWeight = useMemo(() => {
 		return assets.reduce((acc, asset) => acc + asset.weight, 0);
 	}, [assets]);
 
 	const simulationResults = useMemo(() => {
-		return monteCarloSimulation(assets, numSimulations, numYears);
-	}, [assets, numSimulations, numYears]);
+		const sim = runSimulation(assets, 1, 100);
+		console.log(sim.map((v) => v.at(-1)));
 
-	console.log(simulationResults);
+		return [] as any[];
+	}, []);
 
 	return (
 		<div className='min-h-screen bg-gray-50 p-8'>
@@ -253,8 +264,9 @@ function App() {
 									</tr>
 								</thead>
 								<tbody>
-									{simulationResults.map(
-										(simulation, index) => (
+									{simulationResults
+										.slice(0, 5)
+										.map((simulation, index) => (
 											<tr
 												key={index}
 												className='border-t border-gray-300'>
@@ -271,8 +283,7 @@ function App() {
 													)
 												)}
 											</tr>
-										)
-									)}
+										))}
 								</tbody>
 							</table>
 						</div>
