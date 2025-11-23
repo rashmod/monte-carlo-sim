@@ -1,27 +1,4 @@
-import { useState } from 'react';
-
-type HistoricalData = {
-	date: Date;
-	price: number;
-};
-
-type Asset = {
-	name: string;
-	weight: number;
-	rawHistoricalData: string;
-	historicalData: HistoricalData[];
-};
-
-function cleanHistoricalData(historicalData: string): HistoricalData[] {
-	return historicalData
-		.split('\n')
-		.map((line) => line.split('\t').map((w) => w.trim()))
-		.map(([date, price]) => ({
-			date: new Date(date),
-			price: Number(price),
-		}))
-		.sort((a, b) => b.date.getTime() - a.date.getTime());
-}
+import { useMemo, useState } from 'react';
 
 function App() {
 	const [numSimulations, setNumSimulations] = useState(1000);
@@ -31,6 +8,12 @@ function App() {
 	const [weight, setWeight] = useState(0.5);
 	const [rawHistoricalData, setRawHistoricalData] = useState('');
 	const [assets, setAssets] = useState<Asset[]>([]);
+
+	const totalWeight = useMemo(() => {
+		return assets.reduce((acc, asset) => acc + asset.weight, 0);
+	}, [assets]);
+
+	console.log(assets);
 
 	return (
 		<div className='min-h-screen bg-gray-50 p-8'>
@@ -140,18 +123,26 @@ function App() {
 					</div>
 
 					<button
-						onClick={() =>
-							setAssets([
-								...assets,
-								{
-									name: assetName,
-									weight,
-									rawHistoricalData,
-									historicalData:
-										cleanHistoricalData(rawHistoricalData),
-								},
-							])
-						}
+						onClick={() => {
+							const cleanedHistoricalData =
+								cleanHistoricalData(rawHistoricalData);
+							const dailyReturns = calculateDailyReturns(
+								cleanedHistoricalData
+							);
+							const newAsset: Asset = {
+								name: assetName,
+								weight,
+								rawHistoricalData,
+								historicalData: cleanedHistoricalData,
+								dailyReturns,
+								annualExpectedReturn:
+									calculateAnnualExpectedReturn(dailyReturns),
+								annualVolatility:
+									calculateAnnualVolatility(dailyReturns),
+							};
+
+							setAssets([...assets, newAsset]);
+						}}
 						className='px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700'>
 						Add Asset
 					</button>
@@ -159,13 +150,40 @@ function App() {
 
 				<div>
 					<h2 className='text-lg font-medium'>Assets</h2>
+					{totalWeight !== 1 && (
+						<p className='text-red-500'>
+							The sum of the weights must be 100%. Current sum:{' '}
+							{totalWeight * 100}%
+						</p>
+					)}
 					<ul className='space-y-2'>
 						{assets.map((asset, index) => (
 							<li
 								key={index}
 								className='flex items-center justify-between'>
 								<span>{asset.name}</span>
-								<span>{asset.weight}</span>
+								<input
+									type='range'
+									min={0}
+									max={1}
+									step={0.01}
+									value={asset.weight}
+									onChange={(e) =>
+										setAssets(
+											assets.map((a, i) =>
+												i === index
+													? {
+															...a,
+															weight: Number(
+																e.target.value
+															),
+													  }
+													: a
+											)
+										)
+									}
+								/>
+								<span>{asset.weight * 100}%</span>
 							</li>
 						))}
 					</ul>
@@ -176,3 +194,60 @@ function App() {
 }
 
 export default App;
+
+type HistoricalData = {
+	date: Date;
+	price: number;
+};
+
+type Asset = {
+	name: string;
+	weight: number;
+	rawHistoricalData: string;
+	historicalData: HistoricalData[];
+	dailyReturns: number[];
+	annualExpectedReturn: number;
+	annualVolatility: number;
+};
+
+function cleanHistoricalData(historicalData: string): HistoricalData[] {
+	return historicalData
+		.split('\n')
+		.map((line) => line.split('\t').map((w) => w.trim()))
+		.map(([date, price]) => ({
+			date: new Date(date),
+			price: Number(price),
+		}))
+		.sort((a, b) => b.date.getTime() - a.date.getTime());
+}
+
+function calculateDailyReturns(historicalData: HistoricalData[]) {
+	const dailyReturns = historicalData.map((data, index) => {
+		if (index === 0) return 0;
+		return (
+			(data.price - historicalData[index - 1].price) /
+			historicalData[index - 1].price
+		);
+	});
+
+	return dailyReturns;
+}
+
+function calculateAnnualExpectedReturn(dailyReturns: number[]) {
+	const averageDailyReturn =
+		dailyReturns.reduce((acc, ret) => acc + ret, 0) / dailyReturns.length;
+	return (1 + averageDailyReturn) ** 252 - 1;
+}
+
+function calculateAnnualVolatility(dailyReturns: number[]) {
+	const averageDailyReturn =
+		dailyReturns.reduce((acc, ret) => acc + ret, 0) / dailyReturns.length;
+	const variance =
+		dailyReturns.reduce(
+			(acc, ret) => acc + (ret - averageDailyReturn) ** 2,
+			0
+		) /
+		(dailyReturns.length - 1);
+
+	return Math.sqrt(variance) * Math.sqrt(252);
+}
