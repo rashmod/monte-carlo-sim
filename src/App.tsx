@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { generateAsset, type Asset } from './lib';
+import { defaultAssets } from './defaultAssets';
 
 function App() {
 	const [numSimulations, setNumSimulations] = useState(1000);
@@ -7,7 +9,7 @@ function App() {
 	const [assetName, setAssetName] = useState('');
 	const [weight, setWeight] = useState(0.5);
 	const [rawHistoricalData, setRawHistoricalData] = useState('');
-	const [assets, setAssets] = useState<Asset[]>([]);
+	const [assets, setAssets] = useState<Asset[]>(defaultAssets);
 
 	const totalWeight = useMemo(() => {
 		return assets.reduce((acc, asset) => acc + asset.weight, 0);
@@ -124,22 +126,11 @@ function App() {
 
 					<button
 						onClick={() => {
-							const cleanedHistoricalData =
-								cleanHistoricalData(rawHistoricalData);
-							const dailyReturns = calculateDailyReturns(
-								cleanedHistoricalData
-							);
-							const newAsset: Asset = {
-								name: assetName,
+							const newAsset = generateAsset(
+								assetName,
 								weight,
-								rawHistoricalData,
-								historicalData: cleanedHistoricalData,
-								dailyReturns,
-								annualExpectedReturn:
-									calculateAnnualExpectedReturn(dailyReturns),
-								annualVolatility:
-									calculateAnnualVolatility(dailyReturns),
-							};
+								rawHistoricalData
+							);
 
 							setAssets([...assets, newAsset]);
 						}}
@@ -148,45 +139,91 @@ function App() {
 					</button>
 				</div>
 
-				<div>
+				<div className='space-y-4'>
 					<h2 className='text-lg font-medium'>Assets</h2>
 					{totalWeight !== 1 && (
-						<p className='text-red-500'>
+						<p className='text-red-500 text-sm'>
 							The sum of the weights must be 100%. Current sum:{' '}
-							{totalWeight * 100}%
+							{(totalWeight * 100).toFixed(2)}%
 						</p>
 					)}
-					<ul className='space-y-2'>
-						{assets.map((asset, index) => (
-							<li
-								key={index}
-								className='flex items-center justify-between'>
-								<span>{asset.name}</span>
-								<input
-									type='range'
-									min={0}
-									max={1}
-									step={0.01}
-									value={asset.weight}
-									onChange={(e) =>
-										setAssets(
-											assets.map((a, i) =>
-												i === index
-													? {
-															...a,
-															weight: Number(
-																e.target.value
-															),
-													  }
-													: a
-											)
-										)
-									}
-								/>
-								<span>{asset.weight * 100}%</span>
-							</li>
-						))}
-					</ul>
+					{assets.length > 0 && (
+						<table className='w-full border border-gray-300 rounded-md'>
+							<thead>
+								<tr className='bg-gray-100'>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Asset Name
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Weight
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Annual Return
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Volatility
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								{assets.map((asset, index) => (
+									<tr
+										key={index}
+										className='border-t border-gray-300'>
+										<td className='px-4 py-2'>
+											{asset.name}
+										</td>
+										<td className='px-4 py-2'>
+											<div className='flex items-center gap-2'>
+												<input
+													type='range'
+													min={0}
+													max={1}
+													step={0.01}
+													value={asset.weight}
+													onChange={(e) =>
+														setAssets(
+															assets.map((a, i) =>
+																i === index
+																	? {
+																			...a,
+																			weight: Number(
+																				e
+																					.target
+																					.value
+																			),
+																	  }
+																	: a
+															)
+														)
+													}
+													className='flex-1'
+												/>
+												<span className='text-sm w-12 text-right'>
+													{(
+														asset.weight * 100
+													).toFixed(1)}
+													%
+												</span>
+											</div>
+										</td>
+										<td className='px-4 py-2 text-sm'>
+											{(
+												asset.annualExpectedReturn * 100
+											).toFixed(2)}
+											%
+										</td>
+										<td className='px-4 py-2 text-sm'>
+											{(
+												asset.annualVolatility * 100
+											).toFixed(2)}
+											%
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					)}
 				</div>
 			</div>
 		</div>
@@ -194,60 +231,3 @@ function App() {
 }
 
 export default App;
-
-type HistoricalData = {
-	date: Date;
-	price: number;
-};
-
-type Asset = {
-	name: string;
-	weight: number;
-	rawHistoricalData: string;
-	historicalData: HistoricalData[];
-	dailyReturns: number[];
-	annualExpectedReturn: number;
-	annualVolatility: number;
-};
-
-function cleanHistoricalData(historicalData: string): HistoricalData[] {
-	return historicalData
-		.split('\n')
-		.map((line) => line.split('\t').map((w) => w.trim()))
-		.map(([date, price]) => ({
-			date: new Date(date),
-			price: Number(price),
-		}))
-		.sort((a, b) => b.date.getTime() - a.date.getTime());
-}
-
-function calculateDailyReturns(historicalData: HistoricalData[]) {
-	const dailyReturns = historicalData.map((data, index) => {
-		if (index === 0) return 0;
-		return (
-			(data.price - historicalData[index - 1].price) /
-			historicalData[index - 1].price
-		);
-	});
-
-	return dailyReturns;
-}
-
-function calculateAnnualExpectedReturn(dailyReturns: number[]) {
-	const averageDailyReturn =
-		dailyReturns.reduce((acc, ret) => acc + ret, 0) / dailyReturns.length;
-	return (1 + averageDailyReturn) ** 252 - 1;
-}
-
-function calculateAnnualVolatility(dailyReturns: number[]) {
-	const averageDailyReturn =
-		dailyReturns.reduce((acc, ret) => acc + ret, 0) / dailyReturns.length;
-	const variance =
-		dailyReturns.reduce(
-			(acc, ret) => acc + (ret - averageDailyReturn) ** 2,
-			0
-		) /
-		(dailyReturns.length - 1);
-
-	return Math.sqrt(variance) * Math.sqrt(252);
-}
