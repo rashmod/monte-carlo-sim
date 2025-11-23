@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { generateAsset, type Asset } from './lib';
+import { generateAsset, monteCarloSimulation, type Asset } from './lib';
 import { defaultAssets } from './defaultAssets';
 
 function App() {
-	const [numSimulations, setNumSimulations] = useState(1000);
+	const [numSimulations, setNumSimulations] = useState(100);
 	const [numYears, setNumYears] = useState(10);
 	const [inflationRate, setInflationRate] = useState(0.02);
 	const [assetName, setAssetName] = useState('');
@@ -15,7 +15,11 @@ function App() {
 		return assets.reduce((acc, asset) => acc + asset.weight, 0);
 	}, [assets]);
 
-	console.log(assets);
+	const simulationResults = useMemo(() => {
+		return monteCarloSimulation(assets, numSimulations, numYears);
+	}, [assets, numSimulations, numYears]);
+
+	console.log(simulationResults);
 
 	return (
 		<div className='min-h-screen bg-gray-50 p-8'>
@@ -223,6 +227,55 @@ function App() {
 								))}
 							</tbody>
 						</table>
+					)}
+				</div>
+
+				<div className='space-y-4'>
+					<h2 className='text-lg font-medium'>Simulation Results</h2>
+					{simulationResults.length > 0 && (
+						<div className='overflow-x-auto'>
+							<table className='w-full border border-gray-300 rounded-md'>
+								<thead>
+									<tr className='bg-gray-100'>
+										<th className='px-4 py-2 text-left text-sm font-medium'>
+											Simulation
+										</th>
+										{Array.from(
+											{ length: numYears },
+											(_, i) => (
+												<th
+													key={i}
+													className='px-4 py-2 text-left text-sm font-medium'>
+													Year {i + 1}
+												</th>
+											)
+										)}
+									</tr>
+								</thead>
+								<tbody>
+									{simulationResults.map(
+										(simulation, index) => (
+											<tr
+												key={index}
+												className='border-t border-gray-300'>
+												<td className='px-4 py-2 text-sm'>
+													{index + 1}
+												</td>
+												{simulation.map(
+													(value, yearIndex) => (
+														<td
+															key={yearIndex}
+															className='px-4 py-2 text-sm'>
+															{value.toFixed(4)}
+														</td>
+													)
+												)}
+											</tr>
+										)
+									)}
+								</tbody>
+							</table>
+						</div>
 					)}
 				</div>
 			</div>

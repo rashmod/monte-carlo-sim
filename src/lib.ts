@@ -13,7 +13,7 @@ export type Asset = {
 	annualVolatility: number;
 };
 
-export function cleanHistoricalData(historicalData: string): HistoricalData[] {
+function cleanHistoricalData(historicalData: string): HistoricalData[] {
 	return historicalData
 		.trim()
 		.split('\n')
@@ -25,7 +25,7 @@ export function cleanHistoricalData(historicalData: string): HistoricalData[] {
 		}));
 }
 
-export function calculateDailyReturns(historicalData: HistoricalData[]) {
+function calculateDailyReturns(historicalData: HistoricalData[]) {
 	const dailyReturns = historicalData.map((data, index) => {
 		if (index === 0) return 0;
 		return (
@@ -37,13 +37,13 @@ export function calculateDailyReturns(historicalData: HistoricalData[]) {
 	return dailyReturns;
 }
 
-export function calculateAnnualExpectedReturn(dailyReturns: number[]) {
+function calculateAnnualExpectedReturn(dailyReturns: number[]) {
 	const averageDailyReturn =
 		dailyReturns.reduce((acc, ret) => acc + ret, 0) / dailyReturns.length;
 	return (1 + averageDailyReturn) ** 252 - 1;
 }
 
-export function calculateAnnualVolatility(dailyReturns: number[]) {
+function calculateAnnualVolatility(dailyReturns: number[]) {
 	const averageDailyReturn =
 		dailyReturns.reduce((acc, ret) => acc + ret, 0) / dailyReturns.length;
 	const variance =
@@ -75,4 +75,45 @@ export function generateAsset(
 		annualExpectedReturn,
 		annualVolatility,
 	};
+}
+
+// uses the Box-Muller transform to generate a random number from a normal distribution
+function gaussianRandom() {
+	let u = 0,
+		v = 0;
+	while (u === 0) u = Math.random();
+	while (v === 0) v = Math.random();
+	return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+function normalRandomWithMeanStd(mean: number, std: number) {
+	return mean + std * gaussianRandom();
+}
+
+export function monteCarloSimulation(
+	assets: Asset[],
+	numSimulations: number,
+	numYears: number
+) {
+	const simulationResults = [];
+	for (let i = 0; i < numSimulations; i++) {
+		const simulation = [];
+
+		for (let j = 0; j < numYears; j++) {
+			let value = 0;
+			for (let k = 0; k < assets.length; k++) {
+				value +=
+					assets[k].weight *
+					normalRandomWithMeanStd(
+						assets[k].annualExpectedReturn,
+						assets[k].annualVolatility
+					);
+			}
+			simulation.push(value);
+		}
+
+		simulationResults.push(simulation);
+	}
+
+	return simulationResults;
 }
