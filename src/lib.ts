@@ -9,8 +9,6 @@ export type Asset = {
 	rawHistoricalData: string;
 	historicalData: HistoricalData[]; // daily
 	dailyReturns: number[];
-	annualExpectedReturn: number;
-	annualVolatility: number;
 	dailyAverageReturn: number;
 	dailyVolatility: number;
 };
@@ -43,28 +41,9 @@ function calculateDailyReturns(prices: number[]) {
 	const dailyReturns = [];
 
 	for (let i = 1; i < prices.length; i++) {
-		dailyReturns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+		dailyReturns.push(Math.log(prices[i] / prices[i - 1]));
 	}
 	return dailyReturns;
-}
-
-function calculateAnnualExpectedReturn(dailyReturns: number[]) {
-	const averageDailyReturn =
-		dailyReturns.reduce((acc, ret) => acc + ret, 0) / dailyReturns.length;
-	return (1 + averageDailyReturn) ** 252 - 1;
-}
-
-function calculateAnnualVolatility(dailyReturns: number[]) {
-	const averageDailyReturn =
-		dailyReturns.reduce((acc, ret) => acc + ret, 0) / dailyReturns.length;
-	const variance =
-		dailyReturns.reduce(
-			(acc, ret) => acc + (ret - averageDailyReturn) ** 2,
-			0
-		) /
-		(dailyReturns.length - 1);
-
-	return Math.sqrt(variance) * Math.sqrt(252);
 }
 
 export function generateAsset(
@@ -76,8 +55,6 @@ export function generateAsset(
 	const dailyReturns = calculateDailyReturns(
 		cleanedHistoricalData.map((data) => data.price)
 	);
-	const annualExpectedReturn = calculateAnnualExpectedReturn(dailyReturns);
-	const annualVolatility = calculateAnnualVolatility(dailyReturns);
 
 	const dailyAverageReturn = calculateMean(dailyReturns);
 	const dailyVolatility = calculateVolatility(dailyReturns);
@@ -88,8 +65,6 @@ export function generateAsset(
 		rawHistoricalData: historicalData,
 		historicalData: cleanedHistoricalData,
 		dailyReturns,
-		annualExpectedReturn,
-		annualVolatility,
 		dailyAverageReturn,
 		dailyVolatility,
 	};
@@ -181,18 +156,23 @@ export function calculateCorrelationMatrix(assets: Asset[]) {
 	return correlationMatrix;
 }
 
+// Cholesky decomposition for symmetric positive-definite matrix
 function choleskyDecomposition(correlationMatrix: number[][]) {
 	const n = correlationMatrix.length;
 	const L = Array.from({ length: n }, () => Array(n).fill(0));
 
 	for (let i = 0; i < n; i++) {
 		for (let j = 0; j <= i; j++) {
-			let sum = 0;
-			for (let k = 0; k < j; k++) sum += L[i][k] * L[j][k];
+			let sum = correlationMatrix[i][j];
+
+			for (let k = 0; k < j; k++) {
+				sum -= L[i][k] * L[j][k];
+			}
+
 			if (i === j) {
-				L[i][j] = Math.sqrt(correlationMatrix[i][i] - sum);
+				L[i][j] = Math.sqrt(sum);
 			} else {
-				L[i][j] = (correlationMatrix[i][j] - sum) / L[j][j];
+				L[i][j] = sum / L[j][j];
 			}
 		}
 	}
@@ -233,37 +213,37 @@ export function runSimulation(
 	const portfolioPaths: number[][] = [];
 
 	for (let sim = 0; sim < numOfSimulation; sim++) {
-		let portfolioValue = initialValue;
-		const portfolioPath = [portfolioValue];
+		const assetsWithInitialValue = assets.map((asset) => ({
+			...asset,
+			currentValue: initialValue * asset.weight,
+		}));
+
+		const portfolioPath = [initialValue];
 
 		for (let t = 0; t < timeSteps; t++) {
 			const correlatedRandoms = calculateCorrelatedRandom(choleskyMatrix);
 
 			const equityReturns = correlatedRandoms.map((random, i) => {
-				// keep it here
 				// this is GBM drift adjusted
-				// return (
-				// 	Math.exp(
-				// 		assets[i].dailyAverageReturn -
-				// 			0.5 * assets[i].dailyVolatility ** 2 +
-				// 			assets[i].dailyVolatility * random
-				// 	) - 1
-				// );
-
 				return (
-					assets[i].dailyAverageReturn +
-					assets[i].dailyVolatility * random
+					Math.exp(
+						assets[i].dailyAverageReturn -
+							0.5 * assets[i].dailyVolatility ** 2 +
+							assets[i].dailyVolatility * random
+					) - 1
 				);
 			});
 
-			let stepValue = 0;
 			for (let i = 0; i < assets.length; i++) {
-				stepValue +=
-					portfolioValue * assets[i].weight * (equityReturns[i] + 1);
+				assetsWithInitialValue[i].currentValue *= equityReturns[i] + 1;
 			}
 
-			portfolioValue = stepValue;
-			portfolioPath.push(portfolioValue);
+			portfolioPath.push(
+				assetsWithInitialValue.reduce(
+					(acc, asset) => acc + asset.currentValue,
+					0
+				)
+			);
 		}
 
 		portfolioPaths.push(portfolioPath);
