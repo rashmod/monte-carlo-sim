@@ -223,15 +223,15 @@ function App() {
 											</div>
 										</td>
 										<td className='px-4 py-2 text-sm'>
-											{/* {(
-												asset.annualExpectedReturn * 100
-											).toFixed(2)} */}
+											{(
+												asset.annualSimpleReturn * 100
+											).toFixed(2)}
 											%
 										</td>
 										<td className='px-4 py-2 text-sm'>
-											{/* {(
+											{(
 												asset.annualVolatility * 100
-											).toFixed(2)} */}
+											).toFixed(2)}
 											%
 										</td>
 									</tr>

@@ -8,9 +8,13 @@ export type Asset = {
 	weight: number;
 	rawHistoricalData: string;
 	historicalData: HistoricalData[]; // daily
-	dailyReturns: number[];
-	dailyAverageReturn: number;
+	dailyLogReturns: number[];
+	dailySimpleReturns: number[];
+	dailyAverageLogReturn: number;
 	dailyVolatility: number;
+	annualLogReturn: number;
+	annualSimpleReturn: number;
+	annualVolatility: number;
 };
 
 function cleanHistoricalData(historicalData: string): HistoricalData[] {
@@ -37,7 +41,7 @@ function calculateVolatility(returns: number[]) {
 	return Math.sqrt(variance);
 }
 
-function calculateDailyReturns(prices: number[]) {
+function calculateDailyLogReturns(prices: number[]) {
 	const dailyReturns = [];
 
 	for (let i = 1; i < prices.length; i++) {
@@ -46,27 +50,62 @@ function calculateDailyReturns(prices: number[]) {
 	return dailyReturns;
 }
 
+function calculateDailySimpleReturns(prices: number[]) {
+	const dailyReturns = [];
+
+	for (let i = 1; i < prices.length; i++) {
+		dailyReturns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+	}
+	return dailyReturns;
+}
+
+function calculateAnnualLogReturns(averageDailyReturn: number) {
+	return Math.E ** (averageDailyReturn * 252) - 1;
+}
+
+function calculateAnnualSimpleReturns(averageDailyReturn: number) {
+	return (1 + averageDailyReturn) ** 252 - 1;
+}
+
+function calculateAnnualVolatility(dailyVolatility: number) {
+	return dailyVolatility * Math.sqrt(252);
+}
+
 export function generateAsset(
 	name: string,
 	weight: number,
 	historicalData: string
 ): Asset {
 	const cleanedHistoricalData = cleanHistoricalData(historicalData);
-	const dailyReturns = calculateDailyReturns(
+	const dailyLogReturns = calculateDailyLogReturns(
+		cleanedHistoricalData.map((data) => data.price)
+	);
+	const dailySimpleReturns = calculateDailySimpleReturns(
 		cleanedHistoricalData.map((data) => data.price)
 	);
 
-	const dailyAverageReturn = calculateMean(dailyReturns);
-	const dailyVolatility = calculateVolatility(dailyReturns);
+	const dailyAverageLogReturn = calculateMean(dailyLogReturns);
+	const dailyAverageSimpleReturn = calculateMean(dailySimpleReturns);
+	const dailyVolatility = calculateVolatility(dailyLogReturns);
+
+	const annualLogReturn = calculateAnnualLogReturns(dailyAverageLogReturn);
+	const annualSimpleReturn = calculateAnnualSimpleReturns(
+		dailyAverageSimpleReturn
+	);
+	const annualVolatility = calculateAnnualVolatility(dailyVolatility);
 
 	return {
 		name,
 		weight,
 		rawHistoricalData: historicalData,
 		historicalData: cleanedHistoricalData,
-		dailyReturns,
-		dailyAverageReturn,
+		dailyLogReturns,
+		dailyAverageLogReturn,
+		dailySimpleReturns,
 		dailyVolatility,
+		annualLogReturn,
+		annualSimpleReturn,
+		annualVolatility,
 	};
 }
 
@@ -141,10 +180,10 @@ export function calculateCorrelationMatrix(assets: Asset[]) {
 				assets[j].historicalData
 			);
 
-			const returnsA = calculateDailyReturns(
+			const returnsA = calculateDailyLogReturns(
 				alignedPrices.map((data) => data.priceA)
 			);
-			const returnsB = calculateDailyReturns(
+			const returnsB = calculateDailyLogReturns(
 				alignedPrices.map((data) => data.priceB)
 			);
 			const correlation = calculateCorrelation(returnsA, returnsB);
@@ -227,7 +266,7 @@ export function runSimulation(
 				// this is GBM drift adjusted
 				return (
 					Math.exp(
-						assets[i].dailyAverageReturn -
+						assets[i].dailyAverageLogReturn -
 							0.5 * assets[i].dailyVolatility ** 2 +
 							assets[i].dailyVolatility * random
 					) - 1
