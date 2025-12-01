@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-	calculateAverageAnnualPortfolioReturn,
-	calculateCorrelationMatrix,
+	// calculateCorrelationMatrix,
 	generateAsset,
 	runSimulation,
 	type Asset,
@@ -17,10 +16,15 @@ function App() {
 	const [rawHistoricalData, setRawHistoricalData] = useState('');
 	const [assets, setAssets] = useState<Asset[]>(defaultAssets);
 
-	const correlationMatrix = useMemo(
-		() => calculateCorrelationMatrix(assets),
-		[assets]
-	);
+	const [show, setShow] = useState({
+		assetForm: false,
+		simulationResults: false,
+	});
+
+	// const correlationMatrix = useMemo(
+	// 	() => calculateCorrelationMatrix(assets),
+	// 	[assets]
+	// );
 
 	const totalWeight = useMemo(() => {
 		return assets.reduce((acc, asset) => acc + asset.weight, 0);
@@ -28,11 +32,8 @@ function App() {
 
 	const simulationResults = useMemo(() => {
 		const sim = runSimulation(assets, numYears, numSimulations);
-		console.log(sim);
-		const averageReturns = calculateAverageAnnualPortfolioReturn(sim);
-		console.log(averageReturns);
 
-		return [] as any[];
+		return sim;
 	}, [assets, numSimulations, numYears]);
 
 	return (
@@ -92,69 +93,86 @@ function App() {
 				</div>
 
 				<div className='space-y-4'>
-					<div className='flex gap-4'>
-						<div className='flex-1 space-y-2'>
-							<label
-								htmlFor='annual-return'
-								className='block text-sm font-medium'>
-								Asset Name
-							</label>
-							<input
-								type='text'
-								id='annual-return'
-								className='w-full px-3 py-2 border border-gray-300 rounded-md'
-								value={assetName}
-								onChange={(e) => setAssetName(e.target.value)}
-							/>
-						</div>
-
-						<div className='flex-1 space-y-2'>
-							<label
-								htmlFor='weight'
-								className='block text-sm font-medium'>
-								Weight
-							</label>
-							<input
-								type='number'
-								id='weight'
-								className='w-full px-3 py-2 border border-gray-300 rounded-md'
-								value={weight}
-								onChange={(e) =>
-									setWeight(Number(e.target.value))
-								}
-							/>
-						</div>
-					</div>
-
-					<div className='space-y-2'>
-						<label
-							htmlFor='historical-data'
-							className='block text-sm font-medium'>
-							Historical Data
-						</label>
-						<textarea
-							rows={10}
-							id='historical-data'
-							className='w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm'
-							onChange={(e) =>
-								setRawHistoricalData(e.target.value)
-							}
-						/>
-					</div>
-
 					<button
 						onClick={() => {
-							const newAsset = generateAsset(
-								assetName,
-								weight,
-								rawHistoricalData
-							);
-
-							setAssets([...assets, newAsset]);
+							setShow((prev) => ({
+								...prev,
+								assetForm: !prev.assetForm,
+							}));
 						}}
-						className='px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700'>
-						Add Asset
+						className='px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-600'>
+						{show.assetForm ? 'Hide' : 'Show'} Asset Form
 					</button>
+
+					{show.assetForm && (
+						<div className='space-y-4'>
+							<div className='flex gap-4'>
+								<div className='flex-1 space-y-2'>
+									<label
+										htmlFor='annual-return'
+										className='block text-sm font-medium'>
+										Asset Name
+									</label>
+									<input
+										type='text'
+										id='annual-return'
+										className='w-full px-3 py-2 border border-gray-300 rounded-md'
+										value={assetName}
+										onChange={(e) =>
+											setAssetName(e.target.value)
+										}
+									/>
+								</div>
+
+								<div className='flex-1 space-y-2'>
+									<label
+										htmlFor='weight'
+										className='block text-sm font-medium'>
+										Weight
+									</label>
+									<input
+										type='number'
+										id='weight'
+										className='w-full px-3 py-2 border border-gray-300 rounded-md'
+										value={weight}
+										onChange={(e) =>
+											setWeight(Number(e.target.value))
+										}
+									/>
+								</div>
+							</div>
+
+							<div className='space-y-2'>
+								<label
+									htmlFor='historical-data'
+									className='block text-sm font-medium'>
+									Historical Data
+								</label>
+								<textarea
+									rows={10}
+									id='historical-data'
+									className='w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm'
+									onChange={(e) =>
+										setRawHistoricalData(e.target.value)
+									}
+								/>
+							</div>
+
+							<button
+								onClick={() => {
+									const newAsset = generateAsset(
+										assetName,
+										weight,
+										rawHistoricalData
+									);
+
+									setAssets([...assets, newAsset]);
+								}}
+								className='px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700'>
+								Add Asset
+							</button>
+						</div>
+					)}
 				</div>
 
 				<div className='space-y-4'>
@@ -246,7 +264,19 @@ function App() {
 
 				<div className='space-y-4'>
 					<h2 className='text-lg font-medium'>Simulation Results</h2>
-					{simulationResults.length > 0 && (
+					<button
+						onClick={() =>
+							setShow((prev) => ({
+								...prev,
+								simulationResults: !prev.simulationResults,
+							}))
+						}
+						className='px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-600'>
+						{show.simulationResults ? 'Hide' : 'Show'} Simulation
+						Results
+					</button>
+
+					{show.simulationResults && simulationResults.length > 0 && (
 						<div className='overflow-x-auto'>
 							<table className='w-full border border-gray-300 rounded-md'>
 								<thead>
@@ -255,12 +285,15 @@ function App() {
 											Simulation
 										</th>
 										{Array.from(
-											{ length: numYears },
+											{
+												length: simulationResults[0]
+													.length,
+											},
 											(_, i) => (
 												<th
 													key={i}
 													className='px-4 py-2 text-left text-sm font-medium'>
-													Year {i + 1}
+													Day {i}
 												</th>
 											)
 										)}
@@ -280,7 +313,7 @@ function App() {
 													(value, yearIndex) => (
 														<td
 															key={yearIndex}
-															className='px-4 py-2 text-sm'>
+															className='px-4 py-2 font-mono text-right text-sm'>
 															{value.toFixed(4)}
 														</td>
 													)
