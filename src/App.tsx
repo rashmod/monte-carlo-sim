@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
+	calculateAverageAnnualPortfolioReturn,
 	calculateCorrelationMatrix,
 	generateAsset,
 	runSimulation,
@@ -8,8 +9,8 @@ import {
 import { defaultAssets } from './data/defaultAssets';
 
 function App() {
-	const [numSimulations, setNumSimulations] = useState(100);
-	const [numYears, setNumYears] = useState(10);
+	const [numSimulations, setNumSimulations] = useState(10);
+	const [numYears, setNumYears] = useState(5);
 	const [inflationRate, setInflationRate] = useState(0.02);
 	const [assetName, setAssetName] = useState('');
 	const [weight, setWeight] = useState(0.5);
@@ -26,11 +27,13 @@ function App() {
 	}, [assets]);
 
 	const simulationResults = useMemo(() => {
-		const sim = runSimulation(assets, 1, 100);
-		console.log(sim.map((v) => v.at(-1)));
+		const sim = runSimulation(assets, numYears, numSimulations);
+		console.log(sim);
+		const averageReturns = calculateAverageAnnualPortfolioReturn(sim);
+		console.log(averageReturns);
 
 		return [] as any[];
-	}, []);
+	}, [assets, numSimulations, numYears]);
 
 	return (
 		<div className='min-h-screen bg-gray-50 p-8'>

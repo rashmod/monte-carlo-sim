@@ -1,3 +1,5 @@
+const TRADING_DAYS_PER_YEAR = 252;
+
 export type HistoricalData = {
 	date: Date;
 	price: number;
@@ -245,8 +247,7 @@ export function runSimulation(
 	const correlationMatrix = calculateCorrelationMatrix(assets);
 	const choleskyMatrix = choleskyDecomposition(correlationMatrix);
 
-	const TRADING_DAYS_PER_YEAR = 252;
-	const timeSteps = numOfYears * TRADING_DAYS_PER_YEAR;
+	const timeSteps = numOfYears * TRADING_DAYS_PER_YEAR - 1;
 
 	const initialValue = 10000;
 	const portfolioPaths: number[][] = [];
@@ -289,4 +290,37 @@ export function runSimulation(
 	}
 
 	return portfolioPaths;
+}
+
+export function calculateAverageAnnualPortfolioReturn(
+	portfolioPaths: number[][]
+) {
+	const initialValue = portfolioPaths[0][0];
+	const numSimulations = portfolioPaths.length;
+	const numDays = portfolioPaths[0].length;
+
+	const annualReturnsPerTime: number[] = [];
+
+	for (
+		let day = TRADING_DAYS_PER_YEAR;
+		day < numDays;
+		day += TRADING_DAYS_PER_YEAR
+	) {
+		const yearsPassed = day / TRADING_DAYS_PER_YEAR;
+
+		let totalReturnAtThisDay = 0;
+
+		for (let sim = 0; sim < numSimulations; sim++) {
+			const valueAtDay = portfolioPaths[sim][day];
+			const annualReturns =
+				(valueAtDay / initialValue) ** (1 / yearsPassed) - 1;
+
+			totalReturnAtThisDay += annualReturns;
+		}
+
+		const averageReturnAtThisDay = totalReturnAtThisDay / numSimulations;
+		annualReturnsPerTime.push(averageReturnAtThisDay);
+	}
+
+	return annualReturnsPerTime;
 }
