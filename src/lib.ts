@@ -309,7 +309,7 @@ function calculatePercentile(
 	return sortedArray[lower] * (1 - weight) + sortedArray[upper] * weight;
 }
 
-type AnnualReturnStats = {
+type ReturnStats = {
 	average: number;
 	median: number;
 	p5: number;
@@ -318,12 +318,12 @@ type AnnualReturnStats = {
 
 export function calculateAnnualPortfolioReturn(
 	portfolioPaths: number[][]
-): AnnualReturnStats[] {
+): ReturnStats[] {
 	const initialValue = portfolioPaths[0][0];
 	const numSimulations = portfolioPaths.length;
 	const numDays = portfolioPaths[0].length;
 
-	const statsPerTime: AnnualReturnStats[] = [];
+	const statsPerTime: ReturnStats[] = [];
 
 	for (
 		let day = TRADING_DAYS_PER_YEAR;
@@ -346,6 +346,43 @@ export function calculateAnnualPortfolioReturn(
 
 		const average =
 			annualReturns.reduce((acc, ret) => acc + ret, 0) / numSimulations;
+		const median = calculatePercentile(sortedReturns, 50);
+		const p5 = calculatePercentile(sortedReturns, 5);
+		const p95 = calculatePercentile(sortedReturns, 95);
+
+		statsPerTime.push({ average, median, p5, p95 });
+	}
+
+	return statsPerTime;
+}
+
+export function calculateTotalPortfolioReturn(
+	portfolioPaths: number[][]
+): ReturnStats[] {
+	const initialValue = portfolioPaths[0][0];
+	const numSimulations = portfolioPaths.length;
+	const numDays = portfolioPaths[0].length;
+
+	const statsPerTime: ReturnStats[] = [];
+
+	for (
+		let day = TRADING_DAYS_PER_YEAR;
+		day < numDays;
+		day += TRADING_DAYS_PER_YEAR
+	) {
+		const totalReturns: number[] = [];
+
+		for (let sim = 0; sim < numSimulations; sim++) {
+			const valueAtDay = portfolioPaths[sim][day];
+			const totalReturn = valueAtDay / initialValue - 1;
+			totalReturns.push(totalReturn);
+		}
+
+		// Sort for percentile calculations
+		const sortedReturns = [...totalReturns].sort((a, b) => a - b);
+
+		const average =
+			totalReturns.reduce((acc, ret) => acc + ret, 0) / numSimulations;
 		const median = calculatePercentile(sortedReturns, 50);
 		const p5 = calculatePercentile(sortedReturns, 5);
 		const p95 = calculatePercentile(sortedReturns, 95);

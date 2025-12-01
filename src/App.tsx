@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
 	calculateAnnualPortfolioReturn,
+	calculateTotalPortfolioReturn,
 	// calculateCorrelationMatrix,
 	generateAsset,
 	runSimulation,
@@ -39,8 +40,12 @@ function App() {
 		return sim;
 	}, [assets, numSimulations, numYears]);
 
-	const averageAnnualReturns = useMemo(() => {
+	const annualReturns = useMemo(() => {
 		return calculateAnnualPortfolioReturn(simulationResults);
+	}, [simulationResults]);
+
+	const portfolioReturns = useMemo(() => {
+		return calculateTotalPortfolioReturn(simulationResults);
 	}, [simulationResults]);
 
 	return (
@@ -422,7 +427,9 @@ function App() {
 							<tbody>
 								{timeHorizons.map((timeHorizon) => {
 									const stats =
-										averageAnnualReturns[timeHorizon - 1];
+										annualReturns[timeHorizon - 1];
+									const portfolioStats =
+										portfolioReturns[timeHorizon - 1];
 									return (
 										<tr
 											key={timeHorizon}
@@ -431,16 +438,28 @@ function App() {
 												{timeHorizon} years
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right'>
-												{0}%
+												{(
+													portfolioStats.average * 100
+												).toFixed(2)}
+												%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right'>
-												{0}%
+												{(
+													portfolioStats.median * 100
+												).toFixed(2)}
+												%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right'>
-												{0}%
+												{(
+													portfolioStats.p5 * 100
+												).toFixed(2)}
+												%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
-												{0}%
+												{(
+													portfolioStats.p95 * 100
+												).toFixed(2)}
+												%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right'>
 												{(stats.average * 100).toFixed(
