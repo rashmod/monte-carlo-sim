@@ -392,3 +392,56 @@ export function calculateTotalPortfolioReturn(
 
 	return statsPerTime;
 }
+
+type LossProbability = {
+	nominal: number;
+	real: number;
+};
+
+export function calculateProbabilityOfLoss(
+	portfolioPaths: number[][],
+	inflationRate: number
+): LossProbability[] {
+	const initialValue = portfolioPaths[0][0];
+	const numSimulations = portfolioPaths.length;
+	const numDays = portfolioPaths[0].length;
+
+	const probabilitiesPerTime: LossProbability[] = [];
+
+	for (
+		let day = TRADING_DAYS_PER_YEAR;
+		day < numDays;
+		day += TRADING_DAYS_PER_YEAR
+	) {
+		const yearsPassed = day / TRADING_DAYS_PER_YEAR;
+		const inflationAdjustedInitialValue =
+			initialValue * (1 + inflationRate) ** yearsPassed;
+
+		let nominalLossCount = 0;
+		let realLossCount = 0;
+
+		for (let sim = 0; sim < numSimulations; sim++) {
+			const valueAtDay = portfolioPaths[sim][day];
+
+			// Nominal loss: value < initial value
+			if (valueAtDay < initialValue) {
+				nominalLossCount++;
+			}
+
+			// Real loss (loss of purchasing power): value < inflation-adjusted initial value
+			if (valueAtDay < inflationAdjustedInitialValue) {
+				realLossCount++;
+			}
+		}
+
+		const nominalProbability = nominalLossCount / numSimulations;
+		const realProbability = realLossCount / numSimulations;
+
+		probabilitiesPerTime.push({
+			nominal: nominalProbability,
+			real: realProbability,
+		});
+	}
+
+	return probabilitiesPerTime;
+}

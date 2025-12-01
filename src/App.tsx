@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
 	calculateAnnualPortfolioReturn,
+	calculateProbabilityOfLoss,
 	calculateTotalPortfolioReturn,
 	// calculateCorrelationMatrix,
 	generateAsset,
@@ -9,11 +10,11 @@ import {
 } from './lib';
 import { defaultAssets } from './data/defaultAssets';
 
-const timeHorizons = [3, 5];
+const timeHorizons = [3, 5, 7, 10];
 
 function App() {
-	const [numSimulations, setNumSimulations] = useState(10);
-	const [numYears, setNumYears] = useState(5);
+	const [numSimulations, setNumSimulations] = useState(100);
+	const [numYears, setNumYears] = useState(10);
 	const [inflationRate, setInflationRate] = useState(0.02);
 	const [assetName, setAssetName] = useState('');
 	const [weight, setWeight] = useState(0.5);
@@ -47,6 +48,10 @@ function App() {
 	const portfolioReturns = useMemo(() => {
 		return calculateTotalPortfolioReturn(simulationResults);
 	}, [simulationResults]);
+
+	const probabilityOfLoss = useMemo(() => {
+		return calculateProbabilityOfLoss(simulationResults, inflationRate);
+	}, [simulationResults, inflationRate]);
 
 	return (
 		<div className='min-h-screen bg-gray-50 p-8'>
@@ -480,10 +485,20 @@ function App() {
 												{(stats.p95 * 100).toFixed(2)}%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right'>
-												{0}%
+												{(
+													probabilityOfLoss[
+														timeHorizon - 1
+													].nominal * 100
+												).toFixed(2)}
+												%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
-												{0}%
+												{(
+													probabilityOfLoss[
+														timeHorizon - 1
+													].real * 100
+												).toFixed(2)}
+												%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right'>
 												{0}%
