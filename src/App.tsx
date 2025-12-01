@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 import {
+	calculateAnnualPortfolioReturn,
 	// calculateCorrelationMatrix,
 	generateAsset,
 	runSimulation,
 	type Asset,
 } from './lib';
 import { defaultAssets } from './data/defaultAssets';
+
+const timeHorizons = [3, 5];
 
 function App() {
 	const [numSimulations, setNumSimulations] = useState(10);
@@ -35,6 +38,10 @@ function App() {
 
 		return sim;
 	}, [assets, numSimulations, numYears]);
+
+	const averageAnnualReturns = useMemo(() => {
+		return calculateAnnualPortfolioReturn(simulationResults);
+	}, [simulationResults]);
 
 	return (
 		<div className='min-h-screen bg-gray-50 p-8'>
@@ -413,56 +420,70 @@ function App() {
 								</tr>
 							</thead>
 							<tbody>
-								<tr className='border-t border-gray-300'>
-									<td className='px-4 py-2 text-sm border-r border-gray-300'>
-										3 years
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}%
-									</td>
-									<td className='px-4 py-2 text-sm font-mono text-right'>
-										{0}
-									</td>
-								</tr>
+								{timeHorizons.map((timeHorizon) => {
+									const stats =
+										averageAnnualReturns[timeHorizon - 1];
+									return (
+										<tr
+											key={timeHorizon}
+											className='border-t border-gray-300'>
+											<td className='px-4 py-2 text-sm border-r border-gray-300'>
+												{timeHorizon} years
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{0}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{0}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{0}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+												{0}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{(stats.average * 100).toFixed(
+													2
+												)}
+												%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{(stats.median * 100).toFixed(
+													2
+												)}
+												%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{(stats.p5 * 100).toFixed(2)}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+												{(stats.p95 * 100).toFixed(2)}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{0}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+												{0}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{0}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{0}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+												{0}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{0}%
+											</td>
+											<td className='px-4 py-2 text-sm font-mono text-right'>
+												{0}
+											</td>
+										</tr>
+									);
+								})}
 							</tbody>
 						</table>
 					</div>

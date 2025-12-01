@@ -247,7 +247,7 @@ export function runSimulation(
 	const correlationMatrix = calculateCorrelationMatrix(assets);
 	const choleskyMatrix = choleskyDecomposition(correlationMatrix);
 
-	const timeSteps = numOfYears * TRADING_DAYS_PER_YEAR - 1;
+	const timeSteps = numOfYears * TRADING_DAYS_PER_YEAR;
 
 	const initialValue = 10000;
 	const portfolioPaths: number[][] = [];
@@ -292,14 +292,38 @@ export function runSimulation(
 	return portfolioPaths;
 }
 
-export function calculateAverageAnnualPortfolioReturn(
+function calculatePercentile(
+	sortedArray: number[],
+	percentile: number
+): number {
+	if (sortedArray.length === 0) return 0;
+	const index = (percentile / 100) * (sortedArray.length - 1);
+	const lower = Math.floor(index);
+	const upper = Math.ceil(index);
+	const weight = index - lower;
+
+	if (lower === upper) {
+		return sortedArray[lower];
+	}
+
+	return sortedArray[lower] * (1 - weight) + sortedArray[upper] * weight;
+}
+
+type AnnualReturnStats = {
+	average: number;
+	median: number;
+	p5: number;
+	p95: number;
+};
+
+export function calculateAnnualPortfolioReturn(
 	portfolioPaths: number[][]
-) {
+): AnnualReturnStats[] {
 	const initialValue = portfolioPaths[0][0];
 	const numSimulations = portfolioPaths.length;
 	const numDays = portfolioPaths[0].length;
 
-	const annualReturnsPerTime: number[] = [];
+	const statsPerTime: AnnualReturnStats[] = [];
 
 	for (
 		let day = TRADING_DAYS_PER_YEAR;
@@ -308,19 +332,26 @@ export function calculateAverageAnnualPortfolioReturn(
 	) {
 		const yearsPassed = day / TRADING_DAYS_PER_YEAR;
 
-		let totalReturnAtThisDay = 0;
+		const annualReturns: number[] = [];
 
 		for (let sim = 0; sim < numSimulations; sim++) {
 			const valueAtDay = portfolioPaths[sim][day];
-			const annualReturns =
+			const annualReturn =
 				(valueAtDay / initialValue) ** (1 / yearsPassed) - 1;
-
-			totalReturnAtThisDay += annualReturns;
+			annualReturns.push(annualReturn);
 		}
 
-		const averageReturnAtThisDay = totalReturnAtThisDay / numSimulations;
-		annualReturnsPerTime.push(averageReturnAtThisDay);
+		// Sort for percentile calculations
+		const sortedReturns = [...annualReturns].sort((a, b) => a - b);
+
+		const average =
+			annualReturns.reduce((acc, ret) => acc + ret, 0) / numSimulations;
+		const median = calculatePercentile(sortedReturns, 50);
+		const p5 = calculatePercentile(sortedReturns, 5);
+		const p95 = calculatePercentile(sortedReturns, 95);
+
+		statsPerTime.push({ average, median, p5, p95 });
 	}
 
-	return annualReturnsPerTime;
+	return statsPerTime;
 }
