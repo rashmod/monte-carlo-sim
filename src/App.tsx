@@ -325,6 +325,148 @@ function App() {
 						</div>
 					)}
 				</div>
+
+				<div className='space-y-4'>
+					<h2 className='text-lg font-medium'>Results</h2>
+
+					<div className='overflow-x-auto'>
+						<table className='w-full border border-gray-300 rounded-md'>
+							<thead>
+								<tr className='bg-gray-100'>
+									<th
+										rowSpan={2}
+										className='px-4 py-2 text-left text-sm font-medium border-r border-gray-300'>
+										Time horizon
+									</th>
+									<th
+										colSpan={4}
+										className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
+										Total Portfolio Return
+									</th>
+									<th
+										colSpan={4}
+										className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
+										Annualized Return
+									</th>
+									<th
+										colSpan={2}
+										className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
+										Probability
+									</th>
+									<th
+										colSpan={3}
+										className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
+										Drawdown
+									</th>
+									<th
+										colSpan={2}
+										className='px-4 py-2 text-center text-sm font-medium'>
+										Other Metrics
+									</th>
+								</tr>
+								<tr className='bg-gray-100'>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Average
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Median
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										P5
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium border-r border-gray-300'>
+										P95
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Average
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Median
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										P5
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium border-r border-gray-300'>
+										P95
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Loss
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium border-r border-gray-300'>
+										Loss of Purchasing Power
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Median
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Worst (p5)
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium border-r border-gray-300'>
+										Max
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Volatility
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Sharpe Ratio
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr className='border-t border-gray-300'>
+									<td className='px-4 py-2 text-sm border-r border-gray-300'>
+										3 years
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}%
+									</td>
+									<td className='px-4 py-2 text-sm font-mono text-right'>
+										{0}
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

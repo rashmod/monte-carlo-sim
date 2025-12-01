@@ -18,3 +18,4 @@ probability of loss
 probability of loss of purchasing power
 median, p5 and worst drawdown
 volatility of annualized returns
+sharpe ratio
