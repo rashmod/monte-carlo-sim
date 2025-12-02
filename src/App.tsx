@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
 	calculateAnnualPortfolioReturn,
+	calculateMaxDrawdown,
 	calculateProbabilityOfLoss,
 	calculateTotalPortfolioReturn,
 	// calculateCorrelationMatrix,
@@ -13,8 +14,8 @@ import { defaultAssets } from './data/defaultAssets';
 const timeHorizons = [3, 5, 7, 10];
 
 function App() {
-	const [numSimulations, setNumSimulations] = useState(100);
-	const [numYears, setNumYears] = useState(10);
+	const [numSimulations, setNumSimulations] = useState(10);
+	const [numYears, setNumYears] = useState(5);
 	const [inflationRate, setInflationRate] = useState(0.02);
 	const [assetName, setAssetName] = useState('');
 	const [weight, setWeight] = useState(0.5);
@@ -52,6 +53,12 @@ function App() {
 	const probabilityOfLoss = useMemo(() => {
 		return calculateProbabilityOfLoss(simulationResults, inflationRate);
 	}, [simulationResults, inflationRate]);
+
+	const drawdownStats = useMemo(() => {
+		return calculateMaxDrawdown(simulationResults);
+	}, [simulationResults]);
+
+	console.log(drawdownStats);
 
 	return (
 		<div className='min-h-screen bg-gray-50 p-8'>
@@ -435,6 +442,11 @@ function App() {
 										annualReturns[timeHorizon - 1];
 									const portfolioStats =
 										portfolioReturns[timeHorizon - 1];
+									const drawdownStat =
+										drawdownStats[timeHorizon - 1];
+
+									if (!stats) return null;
+
 									return (
 										<tr
 											key={timeHorizon}
@@ -501,13 +513,25 @@ function App() {
 												%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right'>
-												{0}%
+												{(
+													drawdownStat.medianDrawdown *
+													100
+												).toFixed(2)}
+												%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right'>
-												{0}%
+												{(
+													drawdownStat.p5Drawdown *
+													100
+												).toFixed(2)}
+												%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
-												{0}%
+												{(
+													drawdownStat.worstDrawdown *
+													100
+												).toFixed(2)}
+												%
 											</td>
 											<td className='px-4 py-2 text-sm font-mono text-right'>
 												{0}%

@@ -16,6 +16,7 @@ p5, p95, average and median total portfolio returns,
 p5, p95, average and median annual returns,
 probability of loss
 probability of loss of purchasing power
-median, p5 and worst drawdown
+median, p5 and worst max drawdown
+drawdown duration
 volatility of annualized returns
 sharpe ratio
