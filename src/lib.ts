@@ -554,7 +554,7 @@ export function calculateMaxDrawdown(portfolioPaths: number[][]) {
 		}
 
 		const sortedDrawdowns = [...drawdowns].sort((a, b) => a - b);
-		const sortedDurations = [...durations].sort((a, b) => a - b);
+		const sortedDurations = [...durations].sort((a, b) => b - a);
 
 		console.log(drawdowns);
 		const medianDrawdown = calculatePercentile(sortedDrawdowns, 50);

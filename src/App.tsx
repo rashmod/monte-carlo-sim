@@ -378,7 +378,7 @@ function App() {
 										Probability
 									</th>
 									<th
-										colSpan={3}
+										colSpan={7}
 										className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
 										Drawdown
 									</th>
@@ -423,10 +423,22 @@ function App() {
 										Median
 									</th>
 									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Median Duration
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
 										Worst (p5)
 									</th>
-									<th className='px-4 py-2 text-left text-sm font-medium border-r border-gray-300'>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Worst Duration
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
 										Max
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium'>
+										Max Duration
+									</th>
+									<th className='px-4 py-2 text-left text-sm font-medium border-r border-gray-300'>
+										Recovered
 									</th>
 									<th className='px-4 py-2 text-left text-sm font-medium'>
 										Volatility
@@ -436,7 +448,7 @@ function App() {
 									</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody className='font-mono'>
 								{timeHorizons.map((timeHorizon) => {
 									const stats =
 										annualReturns[timeHorizon - 1];
@@ -454,49 +466,49 @@ function App() {
 											<td className='px-4 py-2 text-sm border-r border-gray-300'>
 												{timeHorizon} years
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
 												{(
 													portfolioStats.average * 100
 												).toFixed(2)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
 												{(
 													portfolioStats.median * 100
 												).toFixed(2)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
 												{(
 													portfolioStats.p5 * 100
 												).toFixed(2)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+											<td className='px-4 py-2 text-sm text-right border-r border-gray-300'>
 												{(
 													portfolioStats.p95 * 100
 												).toFixed(2)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
 												{(stats.average * 100).toFixed(
 													2
 												)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
 												{(stats.median * 100).toFixed(
 													2
 												)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
 												{(stats.p5 * 100).toFixed(2)}%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+											<td className='px-4 py-2 text-sm text-right border-r border-gray-300'>
 												{(stats.p95 * 100).toFixed(2)}%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
 												{(
 													probabilityOfLoss[
 														timeHorizon - 1
@@ -504,7 +516,7 @@ function App() {
 												).toFixed(2)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+											<td className='px-4 py-2 text-sm text-right border-r border-gray-300'>
 												{(
 													probabilityOfLoss[
 														timeHorizon - 1
@@ -512,31 +524,56 @@ function App() {
 												).toFixed(2)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
 												{(
 													drawdownStat.medianDrawdown *
 													100
 												).toFixed(2)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
+												{drawdownStat.medianDuration.toFixed(
+													2
+												)}{' '}
+												days
+											</td>
+											<td className='px-4 py-2 text-sm text-right'>
 												{(
 													drawdownStat.p5Drawdown *
 													100
 												).toFixed(2)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right border-r border-gray-300'>
+											<td className='px-4 py-2 text-sm text-right'>
+												{drawdownStat.p5Duration.toFixed(
+													2
+												)}{' '}
+												days
+											</td>
+											<td className='px-4 py-2 text-sm text-right '>
 												{(
 													drawdownStat.worstDrawdown *
 													100
 												).toFixed(2)}
 												%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
+												{drawdownStat.worstDuration.toFixed(
+													2
+												)}{' '}
+												days
+											</td>
+											<td className='px-4 py-2 text-sm text-right border-r border-gray-300'>
+												{(
+													drawdownStat.recoveredPercent *
+													100
+												).toFixed(2)}
+												%
+											</td>
+											<td className='px-4 py-2 text-sm text-right'>
 												{0}%
 											</td>
-											<td className='px-4 py-2 text-sm font-mono text-right'>
+											<td className='px-4 py-2 text-sm text-right'>
 												{0}
 											</td>
 										</tr>
