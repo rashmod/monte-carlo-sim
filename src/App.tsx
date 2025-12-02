@@ -571,7 +571,10 @@ function App() {
 												%
 											</td>
 											<td className='px-4 py-2 text-sm text-right'>
-												{0}%
+												{(stats.stdDev * 100).toFixed(
+													2
+												)}
+												%
 											</td>
 											<td className='px-4 py-2 text-sm text-right'>
 												{0}

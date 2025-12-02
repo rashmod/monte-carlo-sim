@@ -318,12 +318,12 @@ type ReturnStats = {
 
 export function calculateAnnualPortfolioReturn(
 	portfolioPaths: number[][]
-): ReturnStats[] {
+): (ReturnStats & { stdDev: number })[] {
 	const initialValue = portfolioPaths[0][0];
 	const numSimulations = portfolioPaths.length;
 	const numDays = portfolioPaths[0].length;
 
-	const statsPerTime: ReturnStats[] = [];
+	const statsPerTime: (ReturnStats & { stdDev: number })[] = [];
 
 	for (
 		let day = TRADING_DAYS_PER_YEAR;
@@ -350,7 +350,12 @@ export function calculateAnnualPortfolioReturn(
 		const p5 = calculatePercentile(sortedReturns, 5);
 		const p95 = calculatePercentile(sortedReturns, 95);
 
-		statsPerTime.push({ average, median, p5, p95 });
+		const variance =
+			annualReturns.reduce((acc, r) => acc + (r - average) ** 2, 0) /
+			numSimulations;
+		const stdDev = Math.sqrt(variance);
+
+		statsPerTime.push({ average, median, p5, p95, stdDev });
 	}
 
 	return statsPerTime;
