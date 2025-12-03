@@ -586,3 +586,19 @@ export function calculateMaxDrawdown(portfolioPaths: number[][]) {
 
 	return statsPerYear;
 }
+
+// Worker message types
+export type SimulationWorkerMessage = {
+	assets: Asset[];
+	numYears: number;
+	numSimulations: number;
+	inflationRate: number;
+};
+
+export type SimulationWorkerResponse = {
+	simulationResults: number[][];
+	annualReturns: ReturnType<typeof calculateAnnualPortfolioReturn>;
+	portfolioReturns: ReturnType<typeof calculateTotalPortfolioReturn>;
+	probabilityOfLoss: ReturnType<typeof calculateProbabilityOfLoss>;
+	drawdownStats: ReturnType<typeof calculateMaxDrawdown>;
+};

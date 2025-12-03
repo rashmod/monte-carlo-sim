@@ -6,12 +6,14 @@ import {
 	calculateTotalPortfolioReturn,
 	// calculateCorrelationMatrix,
 	generateAsset,
-	runSimulation,
 	type Asset,
+	type SimulationWorkerMessage,
+	type SimulationWorkerResponse,
 } from './lib';
 import { defaultAssets } from './data/defaultAssets';
 
 const timeHorizons = [3, 5, 7, 10, 15, 20, 25, 30];
+const simulationWorker = new URL('./simulation.worker.ts', import.meta.url);
 
 function App() {
 	const [numSimulations, setNumSimulations] = useState(10);
@@ -49,22 +51,46 @@ function App() {
 	const [drawdownStats, setDrawdownStats] = useState<
 		ReturnType<typeof calculateMaxDrawdown>
 	>([]);
+	const [isLoading, setIsLoading] = useState(false);
 
 	const handleRunSimulation = () => {
-		const sim = runSimulation(assets, numYears, numSimulations);
-		setSimulationResults(sim);
+		setIsLoading(true);
 
-		const annual = calculateAnnualPortfolioReturn(sim);
-		setAnnualReturns(annual);
+		const worker = new Worker(simulationWorker, { type: 'module' });
 
-		const portfolio = calculateTotalPortfolioReturn(sim);
-		setPortfolioReturns(portfolio);
+		worker.onmessage = (event: MessageEvent<SimulationWorkerResponse>) => {
+			const {
+				simulationResults: sim,
+				annualReturns: annual,
+				portfolioReturns: portfolio,
+				probabilityOfLoss: probLoss,
+				drawdownStats: drawdown,
+			} = event.data;
 
-		const probLoss = calculateProbabilityOfLoss(sim, inflationRate);
-		setProbabilityOfLoss(probLoss);
+			setSimulationResults(sim);
+			setAnnualReturns(annual);
+			setPortfolioReturns(portfolio);
+			setProbabilityOfLoss(probLoss);
+			setDrawdownStats(drawdown);
 
-		const drawdown = calculateMaxDrawdown(sim);
-		setDrawdownStats(drawdown);
+			setIsLoading(false);
+			worker.terminate();
+		};
+
+		worker.onerror = (error) => {
+			console.error('Worker error:', error);
+			setIsLoading(false);
+			worker.terminate();
+		};
+
+		const message: SimulationWorkerMessage = {
+			assets,
+			numYears,
+			numSimulations,
+			inflationRate,
+		};
+
+		worker.postMessage(message);
 	};
 
 	return (
@@ -125,8 +151,28 @@ function App() {
 
 				<button
 					onClick={handleRunSimulation}
-					className='px-6 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-700 font-medium'>
-					Run Simulation
+					disabled={isLoading}
+					className='px-6 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'>
+					{isLoading && (
+						<svg
+							className='animate-spin h-5 w-5 text-white'
+							xmlns='http://www.w3.org/2000/svg'
+							fill='none'
+							viewBox='0 0 24 24'>
+							<circle
+								className='opacity-25'
+								cx='12'
+								cy='12'
+								r='10'
+								stroke='currentColor'
+								strokeWidth='4'></circle>
+							<path
+								className='opacity-75'
+								fill='currentColor'
+								d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+						</svg>
+					)}
+					{isLoading ? 'Running Simulation...' : 'Run Simulation'}
 				</button>
 
 				<div className='space-y-4'>
