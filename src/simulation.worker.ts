@@ -11,9 +11,22 @@ import {
 export {};
 
 self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
-	const { assets, numYears, numSimulations, inflationRate } = e.data;
+	const {
+		assets,
+		numYears,
+		numSimulations,
+		inflationRate,
+		initialAmount,
+		monthlySIPAmount,
+	} = e.data;
 
-	const sim = runSimulation(assets, numYears, numSimulations);
+	const sim = runSimulation(
+		assets,
+		numYears,
+		numSimulations,
+		initialAmount,
+		monthlySIPAmount
+	);
 	const annual = calculateAnnualPortfolioReturn(sim);
 	const portfolio = calculateTotalPortfolioReturn(sim);
 	const probLoss = calculateProbabilityOfLoss(sim, inflationRate);

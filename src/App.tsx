@@ -6,6 +6,8 @@ import {
 	calculateTotalPortfolioReturn,
 	// calculateCorrelationMatrix,
 	generateAsset,
+	TRADING_DAYS_PER_MONTH,
+	TRADING_DAYS_PER_YEAR,
 	type Asset,
 	type SimulationWorkerMessage,
 	type SimulationWorkerResponse,
@@ -17,8 +19,10 @@ const simulationWorker = new URL('./simulation.worker.ts', import.meta.url);
 
 function App() {
 	const [numSimulations, setNumSimulations] = useState(10);
-	const [numYears, setNumYears] = useState(5);
+	const [numYears, setNumYears] = useState(3);
 	const [inflationRate, setInflationRate] = useState(0.02);
+	const [initialAmount, setInitialAmount] = useState(10000);
+	const [monthlySIPAmount, setMonthlySIPAmount] = useState(0);
 	const [assetName, setAssetName] = useState('');
 	const [weight, setWeight] = useState(0.5);
 	const [rawHistoricalData, setRawHistoricalData] = useState('');
@@ -26,7 +30,7 @@ function App() {
 
 	const [show, setShow] = useState({
 		assetForm: false,
-		simulationResults: false,
+		simulationResults: true,
 	});
 	const [resultsView, setResultsView] = useState<
 		'daily' | 'monthly' | 'yearly'
@@ -91,6 +95,8 @@ function App() {
 			numYears,
 			numSimulations,
 			inflationRate,
+			initialAmount,
+			monthlySIPAmount,
 		};
 
 		worker.postMessage(message);
@@ -157,6 +163,50 @@ function App() {
 							}
 							onChange={(e) =>
 								setInflationRate(Number(e.target.value) / 100)
+							}
+						/>
+					</div>
+
+					<div className='flex-1 space-y-2'>
+						<label
+							htmlFor='initial-amount'
+							className='block text-sm font-medium'>
+							Initial Amount
+						</label>
+						<input
+							type='number'
+							id='initial-amount'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md'
+							value={initialAmount === 0 ? '' : initialAmount}
+							onChange={(e) =>
+								setInitialAmount(
+									e.target.value === ''
+										? 0
+										: Number(e.target.value)
+								)
+							}
+						/>
+					</div>
+
+					<div className='flex-1 space-y-2'>
+						<label
+							htmlFor='monthly-sip'
+							className='block text-sm font-medium'>
+							Monthly SIP Amount
+						</label>
+						<input
+							type='number'
+							id='monthly-sip'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md'
+							value={
+								monthlySIPAmount === 0 ? '' : monthlySIPAmount
+							}
+							onChange={(e) =>
+								setMonthlySIPAmount(
+									e.target.value === ''
+										? 0
+										: Number(e.target.value)
+								)
 							}
 						/>
 					</div>

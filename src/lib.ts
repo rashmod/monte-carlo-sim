@@ -611,6 +611,8 @@ export type SimulationWorkerMessage = {
 	numYears: number;
 	numSimulations: number;
 	inflationRate: number;
+	initialAmount: number;
+	monthlySIPAmount: number;
 };
 
 export type SimulationWorkerResponse = {
