@@ -107,9 +107,13 @@ function App() {
 							type='number'
 							id='num-simulations'
 							className='w-full px-3 py-2 border border-gray-300 rounded-md'
-							value={numSimulations}
+							value={numSimulations === 0 ? '' : numSimulations}
 							onChange={(e) =>
-								setNumSimulations(Number(e.target.value))
+								setNumSimulations(
+									e.target.value === ''
+										? 0
+										: Number(e.target.value)
+								)
 							}
 						/>
 					</div>
@@ -124,9 +128,13 @@ function App() {
 							type='number'
 							id='num-years'
 							className='w-full px-3 py-2 border border-gray-300 rounded-md'
-							value={numYears}
+							value={numYears === 0 ? '' : numYears}
 							onChange={(e) =>
-								setNumYears(Number(e.target.value))
+								setNumYears(
+									e.target.value === ''
+										? 0
+										: Number(e.target.value)
+								)
 							}
 						/>
 					</div>
@@ -141,9 +149,11 @@ function App() {
 							type='number'
 							id='inflation-rate'
 							className='w-full px-3 py-2 border border-gray-300 rounded-md'
-							value={inflationRate}
+							value={
+								inflationRate === 0 ? '' : inflationRate * 100
+							}
 							onChange={(e) =>
-								setInflationRate(Number(e.target.value))
+								setInflationRate(Number(e.target.value) / 100)
 							}
 						/>
 					</div>
