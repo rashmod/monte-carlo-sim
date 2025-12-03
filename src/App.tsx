@@ -28,6 +28,9 @@ function App() {
 		assetForm: false,
 		simulationResults: false,
 	});
+	const [resultsView, setResultsView] = useState<
+		'daily' | 'monthly' | 'yearly'
+	>('monthly');
 
 	// const correlationMatrix = useMemo(
 	// 	() => calculateCorrelationMatrix(assets),
@@ -356,18 +359,43 @@ function App() {
 				</div>
 
 				<div className='space-y-4'>
-					<h2 className='text-lg font-medium'>Simulation Results</h2>
-					<button
-						onClick={() =>
-							setShow((prev) => ({
-								...prev,
-								simulationResults: !prev.simulationResults,
-							}))
-						}
-						className='px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-600'>
-						{show.simulationResults ? 'Hide' : 'Show'} Simulation
-						Results
-					</button>
+					<div className='flex items-center justify-between'>
+						<h2 className='text-lg font-medium'>
+							Simulation Results
+						</h2>
+						<div className='flex items-center gap-4'>
+							{show.simulationResults &&
+								simulationResults.length > 0 && (
+									<select
+										value={resultsView}
+										onChange={(e) =>
+											setResultsView(
+												e.target.value as
+													| 'daily'
+													| 'monthly'
+													| 'yearly'
+											)
+										}
+										className='px-3 py-2 border border-gray-300 rounded-md text-sm'>
+										<option value='daily'>Daily</option>
+										<option value='monthly'>Monthly</option>
+										<option value='yearly'>Yearly</option>
+									</select>
+								)}
+							<button
+								onClick={() =>
+									setShow((prev) => ({
+										...prev,
+										simulationResults:
+											!prev.simulationResults,
+									}))
+								}
+								className='px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-600'>
+								{show.simulationResults ? 'Hide' : 'Show'}{' '}
+								Simulation Results
+							</button>
+						</div>
+					</div>
 
 					{show.simulationResults && simulationResults.length > 0 && (
 						<div className='overflow-x-auto'>
@@ -377,42 +405,115 @@ function App() {
 										<th className='px-4 py-2 text-left text-sm font-medium'>
 											Simulation
 										</th>
-										{Array.from(
-											{
-												length: simulationResults[0]
-													.length,
-											},
-											(_, i) => (
+										{(() => {
+											const fullLength =
+												simulationResults[0].length;
+											let indices: number[] = [];
+
+											if (resultsView === 'daily') {
+												indices = Array.from(
+													{ length: fullLength },
+													(_, i) => i
+												);
+											} else if (
+												resultsView === 'monthly'
+											) {
+												// Show monthly (every 21 trading days)
+												for (
+													let i = 0;
+													i < fullLength;
+													i += TRADING_DAYS_PER_MONTH
+												) {
+													indices.push(i);
+												}
+											} else {
+												// Show yearly (every 252 trading days)
+												for (
+													let i = 0;
+													i < fullLength;
+													i += TRADING_DAYS_PER_YEAR
+												) {
+													indices.push(i);
+												}
+											}
+
+											return indices.map((dayIndex) => (
 												<th
-													key={i}
+													key={dayIndex}
 													className='px-4 py-2 text-left text-sm font-medium'>
-													Day {i}
+													{resultsView === 'daily'
+														? `Day ${dayIndex}`
+														: resultsView ===
+														  'monthly'
+														? `Month ${
+																Math.floor(
+																	dayIndex /
+																		TRADING_DAYS_PER_MONTH
+																) + 1
+														  }`
+														: `Year ${
+																Math.floor(
+																	dayIndex /
+																		TRADING_DAYS_PER_YEAR
+																) + 1
+														  }`}
 												</th>
-											)
-										)}
+											));
+										})()}
 									</tr>
 								</thead>
 								<tbody>
-									{simulationResults
-										.slice(0, 5)
-										.map((simulation, index) => (
-											<tr
-												key={index}
-												className='border-t border-gray-300'>
-												<td className='px-4 py-2 text-sm'>
-													{index + 1}
-												</td>
-												{simulation.map(
-													(value, yearIndex) => (
+									{simulationResults.map(
+										(simulation, index) => {
+											const fullLength =
+												simulation.length;
+											let indices: number[] = [];
+
+											if (resultsView === 'daily') {
+												indices = Array.from(
+													{ length: fullLength },
+													(_, i) => i
+												);
+											} else if (
+												resultsView === 'monthly'
+											) {
+												for (
+													let i = 0;
+													i < fullLength;
+													i += TRADING_DAYS_PER_MONTH
+												) {
+													indices.push(i);
+												}
+											} else {
+												for (
+													let i = 0;
+													i < fullLength;
+													i += TRADING_DAYS_PER_YEAR
+												) {
+													indices.push(i);
+												}
+											}
+
+											return (
+												<tr
+													key={index}
+													className='border-t border-gray-300'>
+													<td className='px-4 py-2 text-sm'>
+														{index + 1}
+													</td>
+													{indices.map((dayIndex) => (
 														<td
-															key={yearIndex}
+															key={dayIndex}
 															className='px-4 py-2 font-mono text-right text-sm'>
-															{value.toFixed(4)}
+															{simulation[
+																dayIndex
+															].toFixed(4)}
 														</td>
-													)
-												)}
-											</tr>
-										))}
+													))}
+												</tr>
+											);
+										}
+									)}
 								</tbody>
 							</table>
 						</div>
