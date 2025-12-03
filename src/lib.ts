@@ -1,4 +1,5 @@
-const TRADING_DAYS_PER_YEAR = 252;
+export const TRADING_DAYS_PER_YEAR = 252;
+export const TRADING_DAYS_PER_MONTH = TRADING_DAYS_PER_YEAR / 12;
 
 export type HistoricalData = {
 	date: Date;
@@ -242,21 +243,27 @@ function calculateCorrelatedRandom(choleskyMatrix: number[][]) {
 export function runSimulation(
 	assets: Asset[],
 	numOfYears: number,
-	numOfSimulation: number
+	numOfSimulation: number,
+	initialValue = 10000,
+	monthlySIPAmount = 0
 ) {
 	const correlationMatrix = calculateCorrelationMatrix(assets);
 	const choleskyMatrix = choleskyDecomposition(correlationMatrix);
 
 	const timeSteps = numOfYears * TRADING_DAYS_PER_YEAR;
 
-	const initialValue = 10000;
 	const portfolioPaths: number[][] = [];
 
 	for (let sim = 0; sim < numOfSimulation; sim++) {
-		const assetsWithInitialValue = assets.map((asset) => ({
-			...asset,
-			currentValue: initialValue * asset.weight,
-		}));
+		const assetsState = assets.map((asset) => {
+			const initialPrice = 1000;
+
+			return {
+				...asset,
+				currentPrice: initialPrice,
+				currentUnits: (initialValue * asset.weight) / initialPrice,
+			};
+		});
 
 		const portfolioPath = [initialValue];
 
@@ -274,16 +281,27 @@ export function runSimulation(
 				);
 			});
 
-			for (let i = 0; i < assets.length; i++) {
-				assetsWithInitialValue[i].currentValue *= equityReturns[i] + 1;
+			for (let i = 0; i < assetsState.length; i++) {
+				assetsState[i].currentPrice *= equityReturns[i] + 1;
 			}
 
-			portfolioPath.push(
-				assetsWithInitialValue.reduce(
-					(acc, asset) => acc + asset.currentValue,
-					0
-				)
+			// monthly sip
+			if (monthlySIPAmount > 0 && t % 12 === 0 && t !== 0) {
+				for (let i = 0; i < assetsState.length; i++) {
+					const amount = monthlySIPAmount * assetsState[i].weight;
+					const price = assetsState[i].currentPrice;
+					const units = amount / price;
+
+					assetsState[i].currentUnits += units;
+				}
+			}
+
+			const totalValue = assetsState.reduce(
+				(acc, asset) => acc + asset.currentPrice * asset.currentUnits,
+				0
 			);
+
+			portfolioPath.push(totalValue);
 		}
 
 		portfolioPaths.push(portfolioPath);
