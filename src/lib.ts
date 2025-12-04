@@ -1,6 +1,8 @@
 export const TRADING_DAYS_PER_YEAR = 252;
 export const TRADING_DAYS_PER_MONTH = TRADING_DAYS_PER_YEAR / 12;
 
+const INITIAL_ASSET_PRICE = 1000;
+
 export type HistoricalData = {
 	date: Date;
 	price: number;
@@ -256,12 +258,11 @@ export function runSimulation(
 
 	for (let sim = 0; sim < numOfSimulation; sim++) {
 		const assetsState = assets.map((asset) => {
-			const initialPrice = 1000;
-
 			return {
 				...asset,
-				currentPrice: initialPrice,
-				currentUnits: (initialValue * asset.weight) / initialPrice,
+				currentPrice: INITIAL_ASSET_PRICE,
+				currentUnits:
+					(initialValue * asset.weight) / INITIAL_ASSET_PRICE,
 			};
 		});
 
@@ -286,7 +287,11 @@ export function runSimulation(
 			}
 
 			// monthly sip
-			if (monthlySIPAmount > 0 && t % 12 === 0 && t !== 0) {
+			if (
+				monthlySIPAmount > 0 &&
+				t % TRADING_DAYS_PER_MONTH === 0 &&
+				t !== 0
+			) {
 				for (let i = 0; i < assetsState.length; i++) {
 					const amount = monthlySIPAmount * assetsState[i].weight;
 					const price = assetsState[i].currentPrice;
@@ -562,8 +567,6 @@ export function calculateMaxDrawdown(portfolioPaths: number[][]) {
 
 	const numYears = results[0].length;
 
-	console.log(results);
-
 	for (let yearIndex = 0; yearIndex < numYears; yearIndex++) {
 		const drawdowns = [];
 		const durations = [];
@@ -579,7 +582,6 @@ export function calculateMaxDrawdown(portfolioPaths: number[][]) {
 		const sortedDrawdowns = [...drawdowns].sort((a, b) => a - b);
 		const sortedDurations = [...durations].sort((a, b) => b - a);
 
-		console.log(drawdowns);
 		const medianDrawdown = calculatePercentile(sortedDrawdowns, 50);
 		const medianDuration = calculatePercentile(sortedDurations, 50);
 
