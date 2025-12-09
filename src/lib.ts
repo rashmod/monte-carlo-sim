@@ -287,11 +287,12 @@ export function runSimulation(
 			}
 
 			// monthly sip
-			if (
+			const isMonthlySIPDay =
 				monthlySIPAmount > 0 &&
 				t % TRADING_DAYS_PER_MONTH === 0 &&
-				t !== 0
-			) {
+				t !== 0;
+
+			if (isMonthlySIPDay) {
 				for (let i = 0; i < assetsState.length; i++) {
 					const amount = monthlySIPAmount * assetsState[i].weight;
 					const price = assetsState[i].currentPrice;
@@ -306,6 +307,15 @@ export function runSimulation(
 				0
 			);
 
+			if (isMonthlySIPDay) {
+				console.log(
+					'adding sip',
+					t,
+					sim,
+					portfolioPath.at(-1),
+					totalValue
+				);
+			}
 			portfolioPath.push(totalValue);
 		}
 
@@ -624,3 +634,102 @@ export type SimulationWorkerResponse = {
 	probabilityOfLoss: ReturnType<typeof calculateProbabilityOfLoss>;
 	drawdownStats: ReturnType<typeof calculateMaxDrawdown>;
 };
+
+export type CashflowTD = {
+	dayIndex: number; // 0,1,2,... representing trading days
+	amount: number;
+};
+
+export function xirrTradingDays(
+	cashflows: CashflowTD[],
+	guess = 0.1,
+	maxIterations = 100,
+	tolerance = 1e-7
+): number {
+	if (cashflows.length < 2) {
+		throw new Error('At least two cashflows are required.');
+	}
+
+	// Sort by dayIndex
+	cashflows = [...cashflows].sort((a, b) => a.dayIndex - b.dayIndex);
+
+	const d0 = cashflows[0].dayIndex;
+
+	const f = (r: number) =>
+		cashflows.reduce((sum, cf) => {
+			const t = (cf.dayIndex - d0) / 252; // time in years
+			return sum + cf.amount / Math.pow(1 + r, t);
+		}, 0);
+
+	const fPrime = (r: number) =>
+		cashflows.reduce((sum, cf) => {
+			const t = (cf.dayIndex - d0) / 252;
+			return sum - (t * cf.amount) / Math.pow(1 + r, t + 1);
+		}, 0);
+
+	let r = guess;
+
+	for (let i = 0; i < maxIterations; i++) {
+		const npv = f(r);
+		const dnpv = fPrime(r);
+
+		if (Math.abs(npv) < tolerance) return r;
+
+		if (dnpv === 0) break;
+
+		const newR = r - npv / dnpv;
+
+		if (!isFinite(newR) || newR <= -1) break;
+
+		r = newR;
+	}
+
+	throw new Error('XIRR (trading days) did not converge');
+}
+
+export function generateCashflowArray(
+	simulation: number[],
+	numYears: number,
+	initialAmount: number,
+	monthlySIPAmount: number
+): CashflowTD[] {
+	const cashflows: CashflowTD[] = [];
+	const numMonths = numYears * 12;
+
+	// Initial investment at day 0
+	cashflows.push({
+		dayIndex: 0,
+		amount: -initialAmount,
+	});
+
+	// Monthly SIP investments
+	for (let i = 1; i <= numMonths; i++) {
+		const dayIndex = i * TRADING_DAYS_PER_MONTH;
+
+		// If this is the last month and matches simulation end, use final value
+		if (i === numMonths && dayIndex === simulation.length - 1) {
+			cashflows.push({
+				dayIndex: dayIndex,
+				amount: simulation[dayIndex],
+			});
+		} else if (dayIndex < simulation.length) {
+			// Monthly SIP investment
+			cashflows.push({
+				dayIndex: dayIndex + 1,
+				amount: -monthlySIPAmount,
+			});
+		}
+	}
+
+	// Add final value if not already included
+	const finalDayIndex = simulation.length - 1;
+	const lastCashflow = cashflows[cashflows.length - 1];
+	if (lastCashflow.dayIndex !== finalDayIndex) {
+		cashflows.push({
+			dayIndex: finalDayIndex,
+			amount: simulation[finalDayIndex],
+		});
+	}
+
+	return cashflows;
+}

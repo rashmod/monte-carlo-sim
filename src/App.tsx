@@ -18,7 +18,7 @@ const timeHorizons = [3, 5, 7, 10, 15, 20, 25, 30];
 const simulationWorker = new URL('./simulation.worker.ts', import.meta.url);
 
 function App() {
-	const [numSimulations, setNumSimulations] = useState(10);
+	const [numSimulations, setNumSimulations] = useState(1);
 	const [numYears, setNumYears] = useState(3);
 	const [inflationRate, setInflationRate] = useState(0.02);
 	const [initialAmount, setInitialAmount] = useState(10000);
@@ -34,7 +34,7 @@ function App() {
 	});
 	const [resultsView, setResultsView] = useState<
 		'daily' | 'monthly' | 'yearly'
-	>('monthly');
+	>('yearly');
 
 	// const correlationMatrix = useMemo(
 	// 	() => calculateCorrelationMatrix(assets),
@@ -75,6 +75,7 @@ function App() {
 			} = event.data;
 
 			setSimulationResults(sim);
+
 			setAnnualReturns(annual);
 			setPortfolioReturns(portfolio);
 			setProbabilityOfLoss(probLoss);
