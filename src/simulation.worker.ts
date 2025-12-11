@@ -33,7 +33,11 @@ self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
 		monthlySIPAmount === 0
 			? calculateAnnualPortfolioReturn(sim)
 			: calculateXIRRStats(sim, initialAmount, monthlySIPAmount);
-	const portfolio = calculateTotalPortfolioReturn(sim);
+	const portfolio = calculateTotalPortfolioReturn(
+		sim,
+		initialAmount,
+		monthlySIPAmount
+	);
 	const probLoss = calculateProbabilityOfLoss(sim, inflationRate);
 	const drawdown = calculateMaxDrawdown(sim);
 

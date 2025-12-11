@@ -386,9 +386,10 @@ export function calculateAnnualPortfolioReturn(
 }
 
 export function calculateTotalPortfolioReturn(
-	portfolioPaths: number[][]
+	portfolioPaths: number[][],
+	initialAmount: number,
+	monthlySIPAmount: number
 ): ReturnStats[] {
-	const initialValue = portfolioPaths[0][0];
 	const numSimulations = portfolioPaths.length;
 	const numDays = portfolioPaths[0].length;
 
@@ -401,9 +402,14 @@ export function calculateTotalPortfolioReturn(
 	) {
 		const totalReturns: number[] = [];
 
+		// Calculate total invested amount up to this time point
+		const numMonths = Math.floor(day / TRADING_DAYS_PER_MONTH);
+		const totalInvested = initialAmount + numMonths * monthlySIPAmount;
+
 		for (let sim = 0; sim < numSimulations; sim++) {
 			const valueAtDay = portfolioPaths[sim][day];
-			const totalReturn = valueAtDay / initialValue - 1;
+			// Total return = (current value - total invested) / total invested
+			const totalReturn = (valueAtDay - totalInvested) / totalInvested;
 			totalReturns.push(totalReturn);
 		}
 

@@ -19,7 +19,7 @@ const simulationWorker = new URL('./simulation.worker.ts', import.meta.url);
 
 function App() {
 	const [numSimulations, setNumSimulations] = useState(10);
-	const [numYears, setNumYears] = useState(3);
+	const [numYears, setNumYears] = useState(30);
 	const [inflationRate, setInflationRate] = useState(0.02);
 	const [initialAmount, setInitialAmount] = useState(10000);
 	const [monthlySIPAmount, setMonthlySIPAmount] = useState(0);
@@ -30,7 +30,7 @@ function App() {
 
 	const [show, setShow] = useState({
 		assetForm: false,
-		simulationResults: true,
+		simulationResults: false,
 	});
 	const [resultsView, setResultsView] = useState<
 		'daily' | 'monthly' | 'yearly'
@@ -73,8 +73,6 @@ function App() {
 				probabilityOfLoss: probLoss,
 				drawdownStats: drawdown,
 			} = event.data;
-
-			console.log(annual);
 
 			setSimulationResults(sim);
 			setAnnualReturns(annual);
