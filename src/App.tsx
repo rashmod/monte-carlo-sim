@@ -18,7 +18,7 @@ const timeHorizons = [3, 5, 7, 10, 15, 20, 25, 30];
 const simulationWorker = new URL('./simulation.worker.ts', import.meta.url);
 
 function App() {
-	const [numSimulations, setNumSimulations] = useState(1);
+	const [numSimulations, setNumSimulations] = useState(10);
 	const [numYears, setNumYears] = useState(3);
 	const [inflationRate, setInflationRate] = useState(0.02);
 	const [initialAmount, setInitialAmount] = useState(10000);
@@ -74,8 +74,9 @@ function App() {
 				drawdownStats: drawdown,
 			} = event.data;
 
-			setSimulationResults(sim);
+			console.log(annual);
 
+			setSimulationResults(sim);
 			setAnnualReturns(annual);
 			setPortfolioReturns(portfolio);
 			setProbabilityOfLoss(probLoss);
@@ -672,14 +673,14 @@ function App() {
 								</thead>
 								<tbody className='font-mono'>
 									{timeHorizons.map((timeHorizon) => {
-										const stats =
+										const annualStats =
 											annualReturns[timeHorizon - 1];
 										const portfolioStats =
 											portfolioReturns[timeHorizon - 1];
 										const drawdownStat =
 											drawdownStats[timeHorizon - 1];
 
-										if (!stats) return null;
+										if (!annualStats) return null;
 
 										return (
 											<tr
@@ -716,26 +717,27 @@ function App() {
 												</td>
 												<td className='px-4 py-2 text-sm text-right'>
 													{(
-														stats.average * 100
+														annualStats.average *
+														100
 													).toFixed(2)}
 													%
 												</td>
 												<td className='px-4 py-2 text-sm text-right'>
 													{(
-														stats.median * 100
+														annualStats.median * 100
 													).toFixed(2)}
 													%
 												</td>
 												<td className='px-4 py-2 text-sm text-right'>
-													{(stats.p5 * 100).toFixed(
-														2
-													)}
+													{(
+														annualStats.p5 * 100
+													).toFixed(2)}
 													%
 												</td>
 												<td className='px-4 py-2 text-sm text-right border-r border-gray-300'>
-													{(stats.p95 * 100).toFixed(
-														2
-													)}
+													{(
+														annualStats.p95 * 100
+													).toFixed(2)}
 													%
 												</td>
 												<td className='px-4 py-2 text-sm text-right'>
@@ -802,7 +804,7 @@ function App() {
 												</td>
 												<td className='px-4 py-2 text-sm text-right'>
 													{(
-														stats.stdDev * 100
+														annualStats.stdDev * 100
 													).toFixed(2)}
 													%
 												</td>
