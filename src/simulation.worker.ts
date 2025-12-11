@@ -38,7 +38,12 @@ self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
 		initialAmount,
 		monthlySIPAmount
 	);
-	const probLoss = calculateProbabilityOfLoss(sim, inflationRate);
+	const probLoss = calculateProbabilityOfLoss(
+		sim,
+		inflationRate,
+		initialAmount,
+		monthlySIPAmount
+	);
 	const drawdown = calculateMaxDrawdown(sim);
 
 	const response: SimulationWorkerResponse = {

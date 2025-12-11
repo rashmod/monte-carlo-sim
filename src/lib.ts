@@ -435,13 +435,15 @@ type LossProbability = {
 
 export function calculateProbabilityOfLoss(
 	portfolioPaths: number[][],
-	inflationRate: number
+	inflationRate: number,
+	initialAmount: number,
+	monthlySipAmount: number
 ): LossProbability[] {
-	const initialValue = portfolioPaths[0][0];
 	const numSimulations = portfolioPaths.length;
 	const numDays = portfolioPaths[0].length;
 
 	const probabilitiesPerTime: LossProbability[] = [];
+	const TRADING_DAYS_MONTH = Math.round(TRADING_DAYS_PER_YEAR / 12);
 
 	for (
 		let day = TRADING_DAYS_PER_YEAR;
@@ -449,8 +451,22 @@ export function calculateProbabilityOfLoss(
 		day += TRADING_DAYS_PER_YEAR
 	) {
 		const yearsPassed = day / TRADING_DAYS_PER_YEAR;
-		const inflationAdjustedInitialValue =
-			initialValue * (1 + inflationRate) ** yearsPassed;
+
+		const monthsPassed = Math.floor(day / TRADING_DAYS_MONTH);
+
+		// --- Inflation-adjusted investment ---
+		let inflationAdjustedInvested =
+			initialAmount * Math.pow(1 + inflationRate, yearsPassed);
+
+		for (let m = 1; m <= monthsPassed; m++) {
+			const yearsSinceContribution = yearsPassed - m / 12;
+			inflationAdjustedInvested +=
+				monthlySipAmount *
+				Math.pow(1 + inflationRate, yearsSinceContribution);
+		}
+
+		// --- Nominal total invested ---
+		const totalInvested = initialAmount + monthsPassed * monthlySipAmount;
 
 		let nominalLossCount = 0;
 		let realLossCount = 0;
@@ -458,23 +474,14 @@ export function calculateProbabilityOfLoss(
 		for (let sim = 0; sim < numSimulations; sim++) {
 			const valueAtDay = portfolioPaths[sim][day];
 
-			// Nominal loss: value < initial value
-			if (valueAtDay < initialValue) {
-				nominalLossCount++;
-			}
+			if (valueAtDay < totalInvested) nominalLossCount++;
 
-			// Real loss (loss of purchasing power): value < inflation-adjusted initial value
-			if (valueAtDay < inflationAdjustedInitialValue) {
-				realLossCount++;
-			}
+			if (valueAtDay < inflationAdjustedInvested) realLossCount++;
 		}
 
-		const nominalProbability = nominalLossCount / numSimulations;
-		const realProbability = realLossCount / numSimulations;
-
 		probabilitiesPerTime.push({
-			nominal: nominalProbability,
-			real: realProbability,
+			nominal: nominalLossCount / numSimulations,
+			real: realLossCount / numSimulations,
 		});
 	}
 
