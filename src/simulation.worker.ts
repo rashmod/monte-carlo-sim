@@ -1,7 +1,8 @@
 import {
 	calculateAnnualPortfolioReturn,
-	calculateMaxDrawdown,
+	calculateDrawdownStats,
 	calculateProbabilityOfLoss,
+	calculateSharpeRatioStats,
 	calculateTotalPortfolioReturn,
 	calculateXIRRStats,
 	runSimulation,
@@ -44,7 +45,8 @@ self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
 		initialAmount,
 		monthlySIPAmount
 	);
-	const drawdown = calculateMaxDrawdown(sim);
+	const drawdown = calculateDrawdownStats(sim);
+	const sharpe = calculateSharpeRatioStats(sim);
 
 	const response: SimulationWorkerResponse = {
 		simulationResults: sim,
@@ -52,6 +54,7 @@ self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
 		portfolioReturns: portfolio,
 		probabilityOfLoss: probLoss,
 		drawdownStats: drawdown,
+		sharpeStats: sharpe,
 	};
 
 	self.postMessage(response);

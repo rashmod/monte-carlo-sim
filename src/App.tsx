@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import {
 	calculateAnnualPortfolioReturn,
-	calculateMaxDrawdown,
+	calculateDrawdownStats,
 	calculateProbabilityOfLoss,
+	calculateSharpeRatioStats,
 	calculateTotalPortfolioReturn,
 	// calculateCorrelationMatrix,
 	generateAsset,
@@ -56,7 +57,10 @@ function App() {
 		ReturnType<typeof calculateProbabilityOfLoss>
 	>([]);
 	const [drawdownStats, setDrawdownStats] = useState<
-		ReturnType<typeof calculateMaxDrawdown>
+		ReturnType<typeof calculateDrawdownStats>
+	>([]);
+	const [sharpeStats, setSharpeStats] = useState<
+		ReturnType<typeof calculateSharpeRatioStats>
 	>([]);
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -72,13 +76,17 @@ function App() {
 				portfolioReturns: portfolio,
 				probabilityOfLoss: probLoss,
 				drawdownStats: drawdown,
+				sharpeStats: sharpe,
 			} = event.data;
+
+			console.log(sim[0]);
 
 			setSimulationResults(sim);
 			setAnnualReturns(annual);
 			setPortfolioReturns(portfolio);
 			setProbabilityOfLoss(probLoss);
 			setDrawdownStats(drawdown);
+			setSharpeStats(sharpe);
 
 			setIsLoading(false);
 			worker.terminate();
@@ -677,6 +685,8 @@ function App() {
 											portfolioReturns[timeHorizon - 1];
 										const drawdownStat =
 											drawdownStats[timeHorizon - 1];
+										const sharpeStat =
+											sharpeStats[timeHorizon - 1];
 
 										if (!annualStats) return null;
 
@@ -807,7 +817,11 @@ function App() {
 													%
 												</td>
 												<td className='px-4 py-2 text-sm text-right'>
-													{0}
+													{sharpeStat
+														? sharpeStat.median.toFixed(
+																3
+														  )
+														: '0.000'}
 												</td>
 											</tr>
 										);

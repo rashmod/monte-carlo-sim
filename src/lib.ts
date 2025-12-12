@@ -385,6 +385,69 @@ export function calculateAnnualPortfolioReturn(
 	return statsPerTime;
 }
 
+export function calculateSharpeRatioStats(
+	portfolioPaths: number[][]
+): (ReturnStats & { stdDev: number })[] {
+	const numSimulations = portfolioPaths.length;
+	const numDays = portfolioPaths[0].length;
+
+	const statsPerTime: (ReturnStats & { stdDev: number })[] = [];
+
+	for (
+		let day = TRADING_DAYS_PER_YEAR;
+		day < numDays;
+		day += TRADING_DAYS_PER_YEAR
+	) {
+		const sharpeValues: number[] = [];
+
+		for (let sim = 0; sim < numSimulations; sim++) {
+			const path = portfolioPaths[sim].slice(0, day + 1);
+			if (path.length < 2) continue;
+
+			const dailyReturns = path
+				.slice(1)
+				.map((value, idx) => (value - path[idx]) / path[idx])
+				.filter((r) => Number.isFinite(r));
+
+			if (dailyReturns.length === 0) continue;
+
+			const meanDaily =
+				dailyReturns.reduce((acc, r) => acc + r, 0) /
+				dailyReturns.length;
+
+			const varianceDaily =
+				dailyReturns.reduce((acc, r) => acc + (r - meanDaily) ** 2, 0) /
+				dailyReturns.length;
+			const stdDaily = Math.sqrt(varianceDaily);
+
+			if (stdDaily === 0) continue;
+
+			const meanAnnual = meanDaily * TRADING_DAYS_PER_YEAR;
+			const stdAnnual = stdDaily * Math.sqrt(TRADING_DAYS_PER_YEAR);
+
+			const sharpe = meanAnnual / stdAnnual; // risk-free assumed 0
+			if (Number.isFinite(sharpe)) sharpeValues.push(sharpe);
+		}
+
+		if (sharpeValues.length === 0) continue;
+
+		const sortedSharpe = [...sharpeValues].sort((a, b) => a - b);
+		const average =
+			sharpeValues.reduce((acc, r) => acc + r, 0) / sharpeValues.length;
+		const median = calculatePercentile(sortedSharpe, 50);
+		const p5 = calculatePercentile(sortedSharpe, 5);
+		const p95 = calculatePercentile(sortedSharpe, 95);
+		const variance =
+			sharpeValues.reduce((acc, r) => acc + (r - average) ** 2, 0) /
+			sharpeValues.length;
+		const stdDev = Math.sqrt(variance);
+
+		statsPerTime.push({ average, median, p5, p95, stdDev });
+	}
+
+	return statsPerTime;
+}
+
 export function calculateTotalPortfolioReturn(
 	portfolioPaths: number[][],
 	initialAmount: number,
@@ -504,7 +567,7 @@ type foo =
 			year: number;
 	  };
 
-export function calculateMaxDrawdown(portfolioPaths: number[][]) {
+export function calculateDrawdownStats(portfolioPaths: number[][]) {
 	const numSimulations = portfolioPaths.length;
 	const numDays = portfolioPaths[0].length;
 
@@ -636,7 +699,8 @@ export type SimulationWorkerResponse = {
 	annualReturns: ReturnType<typeof calculateAnnualPortfolioReturn>;
 	portfolioReturns: ReturnType<typeof calculateTotalPortfolioReturn>;
 	probabilityOfLoss: ReturnType<typeof calculateProbabilityOfLoss>;
-	drawdownStats: ReturnType<typeof calculateMaxDrawdown>;
+	drawdownStats: ReturnType<typeof calculateDrawdownStats>;
+	sharpeStats: ReturnType<typeof calculateSharpeRatioStats>;
 };
 
 export type CashflowTD = {
@@ -815,4 +879,52 @@ export function calculateXIRRStats(
 	}
 
 	return statsPerTime;
+}
+
+export function calculateSharpeRatio(
+	portfolioPath: number[],
+	monthlySIPAmount: number,
+	annualRiskFreeRate: number
+) {
+	const n = portfolioPath.length;
+	const sipSchedule = new Array(n).fill(0);
+
+	for (
+		let day = TRADING_DAYS_PER_MONTH;
+		day < n;
+		day += TRADING_DAYS_PER_MONTH
+	) {
+		const idx = day + 1;
+		if (idx < n) sipSchedule[idx] = monthlySIPAmount;
+	}
+
+	const dailyRiskFreeRate =
+		Math.pow(1 + annualRiskFreeRate, 1 / TRADING_DAYS_PER_YEAR) - 1;
+
+	const dailyReturns: number[] = [];
+
+	for (let t = 1; t < n; t++) {
+		const prevValue = portfolioPath[t - 1];
+		const sipAtT = sipSchedule[t]; // SIP added at end of day t
+
+		// return = (V_t - V_(t-1) - SIP_today) / V_(t-1)
+		const r = (portfolioPath[t] - prevValue - sipAtT) / prevValue;
+		dailyReturns.push(r);
+	}
+
+	// Mean daily return
+	const mean = dailyReturns.reduce((s, r) => s + r, 0) / dailyReturns.length;
+
+	// Standard deviation
+	const variance =
+		dailyReturns.reduce((s, r) => s + (r - mean) ** 2, 0) /
+		(dailyReturns.length - 1);
+
+	const stdDev = Math.sqrt(variance);
+
+	// Daily Sharpe
+	const sharpeDaily = (mean - dailyRiskFreeRate) / stdDev;
+
+	// Annualized Sharpe
+	return sharpeDaily * Math.sqrt(TRADING_DAYS_PER_YEAR);
 }

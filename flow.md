@@ -20,3 +20,8 @@ median, p5 and worst max drawdown
 drawdown duration
 volatility of annualized returns
 sharpe ratio
+
+TODO
+add optimization to find allocation: genetic algorithm, particle swarm optimization, simulated annealing, bayesian optimization
+using objective functions:
+trade off curves
