@@ -60,8 +60,8 @@ export function calculateCorrelationMatrix(assets: Asset[]) {
 		const row = [];
 		for (let j = 0; j < assets.length; j++) {
 			const alignedPrices = alignPrices(
-				assets[i].historicalData,
-				assets[j].historicalData
+				assets[i].historicalData.data,
+				assets[j].historicalData.data
 			);
 
 			const returnsA = calculateDailyLogReturns(
@@ -120,4 +120,3 @@ export function calculateCorrelatedRandom(choleskyMatrix: number[][]) {
 
 	return correlated;
 }
-

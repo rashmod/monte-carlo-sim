@@ -7,7 +7,7 @@ export type Asset = {
 	name: string;
 	weight: number;
 	rawHistoricalData: string;
-	historicalData: HistoricalData[]; // daily
+	historicalData: { data: HistoricalData[]; errors: string[] }; // daily
 	dailyLogReturns: number[]; // continuously compounded
 	dailySimpleReturns: number[]; // arithmetic/simple
 	dailyMeanLogReturn: number; // mean log return
