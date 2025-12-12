@@ -1,5 +1,13 @@
-import { INITIAL_ASSET_PRICE, TRADING_DAYS_PER_MONTH, TRADING_DAYS_PER_YEAR } from './constants';
-import { calculateCorrelatedRandom, calculateCorrelationMatrix, choleskyDecomposition } from './matrix';
+import {
+	INITIAL_ASSET_PRICE,
+	TRADING_DAYS_PER_MONTH,
+	TRADING_DAYS_PER_YEAR,
+} from './constants';
+import {
+	generateCorrelatedRandom,
+	calculateCorrelationMatrix,
+	choleskyDecomposition,
+} from './matrix';
 import type { Asset } from './types';
 
 export function runSimulation(
@@ -21,14 +29,15 @@ export function runSimulation(
 			return {
 				...asset,
 				currentPrice: INITIAL_ASSET_PRICE,
-				currentUnits: (initialValue * asset.weight) / INITIAL_ASSET_PRICE,
+				currentUnits:
+					(initialValue * asset.weight) / INITIAL_ASSET_PRICE,
 			};
 		});
 
 		const portfolioPath = [initialValue];
 
 		for (let t = 0; t < timeSteps; t++) {
-			const correlatedRandoms = calculateCorrelatedRandom(choleskyMatrix);
+			const correlatedRandoms = generateCorrelatedRandom(choleskyMatrix);
 
 			const equityReturns = correlatedRandoms.map((random, i) => {
 				// GBM drift-adjusted daily log return -> converted to simple return
@@ -74,4 +83,3 @@ export function runSimulation(
 
 	return portfolioPaths;
 }
-
