@@ -1,9 +1,9 @@
 import {
-	calculateAnnualPortfolioReturn,
 	calculateDrawdownStats,
+	calculateGeometricAnnualPortfolioReturn,
 	calculateProbabilityOfLoss,
 	calculateSharpeRatioStats,
-	calculateTotalPortfolioReturn,
+	calculateSimpleTotalPortfolioReturn,
 	calculateXIRRStats,
 	runSimulation,
 	type SimulationWorkerMessage,
@@ -32,9 +32,9 @@ self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
 
 	const annual =
 		monthlySIPAmount === 0
-			? calculateAnnualPortfolioReturn(sim)
+			? calculateGeometricAnnualPortfolioReturn(sim)
 			: calculateXIRRStats(sim, initialAmount, monthlySIPAmount);
-	const portfolio = calculateTotalPortfolioReturn(
+	const portfolio = calculateSimpleTotalPortfolioReturn(
 		sim,
 		initialAmount,
 		monthlySIPAmount

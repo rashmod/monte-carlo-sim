@@ -8,15 +8,16 @@ export type Asset = {
 	weight: number;
 	rawHistoricalData: string;
 	historicalData: HistoricalData[]; // daily
-	dailyLogReturns: number[];
-	dailySimpleReturns: number[];
-	dailyAverageLogReturn: number;
-	dailyVolatility: number;
-	annualLogReturn: number;
-	annualSimpleReturn: number;
-	annualVolatility: number;
+	dailyLogReturns: number[]; // continuously compounded
+	dailySimpleReturns: number[]; // arithmetic/simple
+	dailyMeanLogReturn: number; // mean log return
+	dailyLogReturnVolatility: number; // std dev of log returns
+	annualizedLogReturn: number; // annualized log return
+	annualizedSimpleReturn: number; // annualized simple return
+	annualizedLogReturnVolatility: number; // annualized vol of log returns
 };
 
+// Return stats represent simple (arithmetic) nominal returns unless noted
 export type ReturnStats = {
 	average: number;
 	median: number;

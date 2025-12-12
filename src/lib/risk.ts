@@ -1,5 +1,10 @@
 import { TRADING_DAYS_PER_MONTH, TRADING_DAYS_PER_YEAR } from './constants';
-import { calculatePercentile, calculateVolatility, calculateMean, annualizeMeanAndStd } from './stats';
+import {
+	calculatePercentile,
+	calculateVolatility,
+	calculateMean,
+	annualizeSimpleMeanAndStd,
+} from './stats';
 import type { LossProbability, ReturnStatsWithStdDev } from './types';
 
 export function calculateProbabilityOfLoss(
@@ -98,6 +103,7 @@ export function calculateSharpeRatio(
 	return sharpeDaily * Math.sqrt(TRADING_DAYS_PER_YEAR);
 }
 
+// TODO this is wrong
 export function calculateSharpeRatioStats(
 	portfolioPaths: number[][]
 ): ReturnStatsWithStdDev[] {
@@ -117,6 +123,7 @@ export function calculateSharpeRatioStats(
 			const path = portfolioPaths[sim].slice(0, day + 1);
 			if (path.length < 2) continue;
 
+			// Arithmetic/simple daily returns derived from path
 			const dailyReturns = path
 				.slice(1)
 				.map((value, idx) => (value - path[idx]) / path[idx])
@@ -135,7 +142,7 @@ export function calculateSharpeRatioStats(
 
 			if (stdDaily === 0) continue;
 
-			const { meanAnnual, stdAnnual } = annualizeMeanAndStd(
+			const { meanAnnual, stdAnnual } = annualizeSimpleMeanAndStd(
 				meanDaily,
 				stdDaily
 			);
@@ -162,4 +169,3 @@ export function calculateSharpeRatioStats(
 
 	return statsPerTime;
 }
-

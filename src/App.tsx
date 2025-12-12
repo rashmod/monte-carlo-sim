@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import {
-	calculateAnnualPortfolioReturn,
 	calculateDrawdownStats,
+	calculateGeometricAnnualPortfolioReturn,
 	calculateProbabilityOfLoss,
 	calculateSharpeRatioStats,
-	calculateTotalPortfolioReturn,
+	calculateSimpleTotalPortfolioReturn,
 	// calculateCorrelationMatrix,
 	generateAsset,
 	TRADING_DAYS_PER_MONTH,
@@ -48,10 +48,10 @@ function App() {
 
 	const [simulationResults, setSimulationResults] = useState<number[][]>([]);
 	const [annualReturns, setAnnualReturns] = useState<
-		ReturnType<typeof calculateAnnualPortfolioReturn>
+		ReturnType<typeof calculateGeometricAnnualPortfolioReturn>
 	>([]);
 	const [portfolioReturns, setPortfolioReturns] = useState<
-		ReturnType<typeof calculateTotalPortfolioReturn>
+		ReturnType<typeof calculateSimpleTotalPortfolioReturn>
 	>([]);
 	const [probabilityOfLoss, setProbabilityOfLoss] = useState<
 		ReturnType<typeof calculateProbabilityOfLoss>
@@ -399,13 +399,15 @@ function App() {
 										</td>
 										<td className='px-4 py-2 text-sm'>
 											{(
-												asset.annualSimpleReturn * 100
+												asset.annualizedSimpleReturn *
+												100
 											).toFixed(2)}
 											%
 										</td>
 										<td className='px-4 py-2 text-sm'>
 											{(
-												asset.annualVolatility * 100
+												asset.annualizedLogReturnVolatility *
+												100
 											).toFixed(2)}
 											%
 										</td>
@@ -593,13 +595,13 @@ function App() {
 										</th>
 										<th
 											colSpan={4}
-											className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
-											Total Portfolio Return
+										className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
+											Total Portfolio Return (simple/arithmetic)
 										</th>
 										<th
 											colSpan={4}
-											className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
-											Annualized Return
+										className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
+											Annualized Return (geometric CAGR or XIRR)
 										</th>
 										<th
 											colSpan={2}

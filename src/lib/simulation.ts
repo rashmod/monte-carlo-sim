@@ -31,12 +31,12 @@ export function runSimulation(
 			const correlatedRandoms = calculateCorrelatedRandom(choleskyMatrix);
 
 			const equityReturns = correlatedRandoms.map((random, i) => {
-				// this is GBM drift adjusted
+				// GBM drift-adjusted daily log return -> converted to simple return
 				return (
 					Math.exp(
-						assets[i].dailyAverageLogReturn -
-							0.5 * assets[i].dailyVolatility ** 2 +
-							assets[i].dailyVolatility * random
+						assets[i].dailyMeanLogReturn -
+							0.5 * assets[i].dailyLogReturnVolatility ** 2 +
+							assets[i].dailyLogReturnVolatility * random
 					) - 1
 				);
 			});

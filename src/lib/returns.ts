@@ -2,6 +2,7 @@ import { TRADING_DAYS_PER_MONTH, TRADING_DAYS_PER_YEAR } from './constants';
 import { calculatePercentile } from './stats';
 import type { ReturnStats, ReturnStatsWithStdDev } from './types';
 
+// Continuously compounded (log) daily return stream
 export function calculateDailyLogReturns(prices: number[]) {
 	const dailyReturns = [];
 
@@ -11,6 +12,7 @@ export function calculateDailyLogReturns(prices: number[]) {
 	return dailyReturns;
 }
 
+// Arithmetic/simple daily return stream
 export function calculateDailySimpleReturns(prices: number[]) {
 	const dailyReturns = [];
 
@@ -20,19 +22,24 @@ export function calculateDailySimpleReturns(prices: number[]) {
 	return dailyReturns;
 }
 
-export function calculateAnnualLogReturns(averageDailyReturn: number) {
-	return Math.E ** (averageDailyReturn * TRADING_DAYS_PER_YEAR) - 1;
+// Annualized continuously compounded return from avg daily log return
+export function calculateAnnualizedLogReturn(averageDailyLogReturn: number) {
+	return Math.E ** (averageDailyLogReturn * TRADING_DAYS_PER_YEAR) - 1;
 }
 
-export function calculateAnnualSimpleReturns(averageDailyReturn: number) {
-	return (1 + averageDailyReturn) ** TRADING_DAYS_PER_YEAR - 1;
+// Annualized simple return from avg daily arithmetic return
+export function calculateAnnualizedSimpleReturn(
+	averageDailySimpleReturn: number
+) {
+	return (1 + averageDailySimpleReturn) ** TRADING_DAYS_PER_YEAR - 1;
 }
 
-export function calculateAnnualVolatility(dailyVolatility: number) {
-	return dailyVolatility * Math.sqrt(TRADING_DAYS_PER_YEAR);
+export function calculateAnnualizedLogVolatility(dailyLogVolatility: number) {
+	return dailyLogVolatility * Math.sqrt(TRADING_DAYS_PER_YEAR);
 }
 
-export function calculateAnnualPortfolioReturn(
+// Geometric annualized portfolio return (CAGR) across simulations
+export function calculateGeometricAnnualPortfolioReturn(
 	portfolioPaths: number[][]
 ): ReturnStatsWithStdDev[] {
 	const initialValue = portfolioPaths[0][0];
@@ -53,6 +60,7 @@ export function calculateAnnualPortfolioReturn(
 		for (let sim = 0; sim < numSimulations; sim++) {
 			const valueAtDay = portfolioPaths[sim][day];
 			const annualReturn =
+				// CAGR -> geometric mean annual return
 				(valueAtDay / initialValue) ** (1 / yearsPassed) - 1;
 			annualReturns.push(annualReturn);
 		}
@@ -77,7 +85,8 @@ export function calculateAnnualPortfolioReturn(
 	return statsPerTime;
 }
 
-export function calculateTotalPortfolioReturn(
+// Simple (arithmetic) total portfolio return relative to contributed capital
+export function calculateSimpleTotalPortfolioReturn(
 	portfolioPaths: number[][],
 	initialAmount: number,
 	monthlySIPAmount: number

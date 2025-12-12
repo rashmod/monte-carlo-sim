@@ -1,7 +1,7 @@
 import {
-	calculateAnnualLogReturns,
-	calculateAnnualSimpleReturns,
-	calculateAnnualVolatility,
+	calculateAnnualizedLogReturn,
+	calculateAnnualizedSimpleReturn,
+	calculateAnnualizedLogVolatility,
 	calculateDailyLogReturns,
 	calculateDailySimpleReturns,
 } from './returns';
@@ -33,15 +33,18 @@ export function generateAsset(
 		cleanedHistoricalData.map((data) => data.price)
 	);
 
-	const dailyAverageLogReturn = calculateMean(dailyLogReturns);
-	const dailyAverageSimpleReturn = calculateMean(dailySimpleReturns);
-	const dailyVolatility = calculateVolatility(dailyLogReturns);
+	const dailyMeanLogReturn = calculateMean(dailyLogReturns);
+	const dailyMeanSimpleReturn = calculateMean(dailySimpleReturns);
+	const dailyLogReturnVolatility = calculateVolatility(dailyLogReturns);
 
-	const annualLogReturn = calculateAnnualLogReturns(dailyAverageLogReturn);
-	const annualSimpleReturn = calculateAnnualSimpleReturns(
-		dailyAverageSimpleReturn
+	const annualizedLogReturn =
+		calculateAnnualizedLogReturn(dailyMeanLogReturn);
+	const annualizedSimpleReturn = calculateAnnualizedSimpleReturn(
+		dailyMeanSimpleReturn
 	);
-	const annualVolatility = calculateAnnualVolatility(dailyVolatility);
+	const annualizedLogReturnVolatility = calculateAnnualizedLogVolatility(
+		dailyLogReturnVolatility
+	);
 
 	return {
 		name,
@@ -49,12 +52,12 @@ export function generateAsset(
 		rawHistoricalData: historicalData,
 		historicalData: cleanedHistoricalData,
 		dailyLogReturns,
-		dailyAverageLogReturn,
 		dailySimpleReturns,
-		dailyVolatility,
-		annualLogReturn,
-		annualSimpleReturn,
-		annualVolatility,
+		dailyMeanLogReturn,
+		dailyLogReturnVolatility,
+		annualizedLogReturn,
+		annualizedSimpleReturn,
+		annualizedLogReturnVolatility,
 	};
 }
 
