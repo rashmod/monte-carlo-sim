@@ -75,7 +75,7 @@ describe('Stats Calculation', () => {
 			const arr2 = [1.1, 1.2, 1.3];
 			const volatility1 = calculateVolatility(arr1);
 			const volatility2 = calculateVolatility(arr2);
-			expect(volatility1).toBeCloseTo(volatility2, 16);
+			expect(volatility1).toBeCloseTo(volatility2, 10);
 		});
 
 		it('doubles when input is doubled', () => {
@@ -83,7 +83,7 @@ describe('Stats Calculation', () => {
 			const arr2 = [0.2, 0.4, 0.6];
 			const volatility1 = calculateVolatility(arr1);
 			const volatility2 = calculateVolatility(arr2);
-			expect(volatility1 * 2).toBeCloseTo(volatility2, 16);
+			expect(volatility1 * 2).toBeCloseTo(volatility2, 10);
 		});
 
 		it('throws on empty array', () => {

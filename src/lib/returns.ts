@@ -4,6 +4,10 @@ import type { ReturnStats, ReturnStatsWithStdDev } from './types';
 
 // Continuously compounded (log) daily return stream
 export function calculateDailyLogReturns(prices: number[]) {
+	if (prices.length <= 1) {
+		throw new Error('Prices array must contain at least two elements');
+	}
+
 	const dailyReturns = [];
 
 	for (let i = 1; i < prices.length; i++) {
@@ -14,6 +18,10 @@ export function calculateDailyLogReturns(prices: number[]) {
 
 // Arithmetic/simple daily return stream
 export function calculateDailySimpleReturns(prices: number[]) {
+	if (prices.length <= 1) {
+		throw new Error('Prices array must contain at least two elements');
+	}
+
 	const dailyReturns = [];
 
 	for (let i = 1; i < prices.length; i++) {
