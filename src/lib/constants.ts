@@ -1,0 +1,4 @@
+export const TRADING_DAYS_PER_YEAR = 252;
+export const TRADING_DAYS_PER_MONTH = TRADING_DAYS_PER_YEAR / 12;
+export const INITIAL_ASSET_PRICE = 1000;
+
