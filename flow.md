@@ -25,3 +25,7 @@ TODO
 add optimization to find allocation: genetic algorithm, particle swarm optimization, simulated annealing, bayesian optimization
 using objective functions:
 trade off curves
+
+TODO
+data validation
+nan, infinity, undefined, null
