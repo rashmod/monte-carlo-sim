@@ -22,6 +22,7 @@ function App() {
 	const [numSimulations, setNumSimulations] = useState(10);
 	const [numYears, setNumYears] = useState(30);
 	const [inflationRate, setInflationRate] = useState(0.02);
+	const [riskFreeRate, setRiskFreeRate] = useState(0.02);
 	const [initialAmount, setInitialAmount] = useState(10000);
 	const [monthlySIPAmount, setMonthlySIPAmount] = useState(0);
 	const [assetName, setAssetName] = useState('');
@@ -105,7 +106,7 @@ function App() {
 			inflationRate,
 			initialAmount,
 			monthlySIPAmount,
-			annualRiskFreeRate: 0.02,
+			annualRiskFreeRate: riskFreeRate,
 		};
 
 		worker.postMessage(message);
@@ -172,6 +173,23 @@ function App() {
 							}
 							onChange={(e) =>
 								setInflationRate(Number(e.target.value) / 100)
+							}
+						/>
+					</div>
+
+					<div className='flex-1 space-y-2'>
+						<label
+							htmlFor='risk-free-rate'
+							className='block text-sm font-medium'>
+							Risk Free Rate
+						</label>
+						<input
+							type='number'
+							id='risk-free-rate'
+							className='w-full px-3 py-2 border border-gray-300 rounded-md'
+							value={riskFreeRate === 0 ? '' : riskFreeRate * 100}
+							onChange={(e) =>
+								setRiskFreeRate(Number(e.target.value) / 100)
 							}
 						/>
 					</div>
