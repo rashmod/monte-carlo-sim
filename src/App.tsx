@@ -105,6 +105,7 @@ function App() {
 			inflationRate,
 			initialAmount,
 			monthlySIPAmount,
+			annualRiskFreeRate: 0.02,
 		};
 
 		worker.postMessage(message);

@@ -3,7 +3,6 @@ import {
 	calculatePercentile,
 	calculateVolatility,
 	calculateMean,
-	annualizeSimpleMeanAndStd,
 	calculateVariance,
 } from './stats';
 import type { LossProbability, ReturnStatsWithStdDev } from './types';
@@ -104,12 +103,13 @@ export function calculateSharpeRatio(
 	return sharpeDaily * Math.sqrt(TRADING_DAYS_PER_YEAR);
 }
 
-// TODO this is wrong
 export function calculateSharpeRatioStats(
-	portfolioPaths: number[][]
-): ReturnStatsWithStdDev[] {
-	const numSimulations = portfolioPaths.length;
+	portfolioPaths: number[][],
+	monthlySIPAmount: number,
+	annualRiskFreeRate: number
+) {
 	const numDays = portfolioPaths[0].length;
+	const numSimulations = portfolioPaths.length;
 
 	const statsPerTime: ReturnStatsWithStdDev[] = [];
 
@@ -119,40 +119,15 @@ export function calculateSharpeRatioStats(
 		day += TRADING_DAYS_PER_YEAR
 	) {
 		const sharpeValues: number[] = [];
-
 		for (let sim = 0; sim < numSimulations; sim++) {
 			const path = portfolioPaths[sim].slice(0, day + 1);
-			if (path.length < 2) continue;
-
-			// Arithmetic/simple daily returns derived from path
-			const dailyReturns = path
-				.slice(1)
-				.map((value, idx) => (value - path[idx]) / path[idx])
-				.filter((r) => Number.isFinite(r));
-
-			if (dailyReturns.length === 0) continue;
-
-			const meanDaily =
-				dailyReturns.reduce((acc, r) => acc + r, 0) /
-				dailyReturns.length;
-
-			const varianceDaily =
-				dailyReturns.reduce((acc, r) => acc + (r - meanDaily) ** 2, 0) /
-				dailyReturns.length;
-			const stdDaily = Math.sqrt(varianceDaily);
-
-			if (stdDaily === 0) continue;
-
-			const { meanAnnual, stdAnnual } = annualizeSimpleMeanAndStd(
-				meanDaily,
-				stdDaily
+			const sharpe = calculateSharpeRatio(
+				path,
+				monthlySIPAmount,
+				annualRiskFreeRate
 			);
-
-			const sharpe = meanAnnual / stdAnnual; // risk-free assumed 0
-			if (Number.isFinite(sharpe)) sharpeValues.push(sharpe);
+			sharpeValues.push(sharpe);
 		}
-
-		if (sharpeValues.length === 0) continue;
 
 		const sortedSharpe = [...sharpeValues].sort((a, b) => a - b);
 

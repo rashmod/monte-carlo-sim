@@ -1,5 +1,3 @@
-import { TRADING_DAYS_PER_YEAR } from './constants';
-
 export function calculateMean(nums: number[]) {
 	return nums.reduce((acc, num) => acc + num, 0) / nums.length;
 }
@@ -34,15 +32,4 @@ export function calculatePercentile(sortedArray: number[], percentile: number) {
 	}
 
 	return sortedArray[lower] * (1 - weight) + sortedArray[upper] * weight;
-}
-
-// TODO this should be removed
-export function annualizeSimpleMeanAndStd(
-	dailyMean: number,
-	dailyStd: number
-): { meanAnnual: number; stdAnnual: number } {
-	return {
-		meanAnnual: dailyMean * TRADING_DAYS_PER_YEAR,
-		stdAnnual: dailyStd * Math.sqrt(TRADING_DAYS_PER_YEAR),
-	};
 }

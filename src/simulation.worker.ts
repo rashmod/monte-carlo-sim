@@ -20,6 +20,7 @@ self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
 		initialAmount,
 		monthlySIPAmount,
 		inflationRate,
+		annualRiskFreeRate,
 	} = e.data;
 
 	if (numYears < 1) {
@@ -65,7 +66,11 @@ self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
 		monthlySIPAmount
 	);
 	const drawdown = calculateDrawdownStats(sim);
-	const sharpe = calculateSharpeRatioStats(sim);
+	const sharpe = calculateSharpeRatioStats(
+		sim,
+		monthlySIPAmount,
+		annualRiskFreeRate
+	);
 
 	const response: SimulationWorkerResponse = {
 		simulationResults: sim,

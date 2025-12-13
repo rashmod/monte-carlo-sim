@@ -70,12 +70,13 @@ export type SimulationWorkerMessage = {
 	inflationRate: number;
 	initialAmount: number;
 	monthlySIPAmount: number;
+	annualRiskFreeRate: number;
 };
 
 export type SimulationWorkerResponse = {
 	simulationResults: number[][];
 	annualReturns: ReturnStatsWithStdDev[];
-	portfolioReturns: ReturnStats[];
+	portfolioReturns: ReturnStatsWithStdDev[];
 	probabilityOfLoss: LossProbability[];
 	drawdownStats: DrawdownYearStats[];
 	sharpeStats: ReturnStatsWithStdDev[];
