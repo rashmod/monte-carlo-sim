@@ -39,6 +39,9 @@ self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
 	if (inflationRate < 0) {
 		throw new Error('Inflation rate must be greater than or equal to 0');
 	}
+	if (assets.length === 0) {
+		throw new Error('At least one asset is required');
+	}
 
 	const sim = runSimulation(
 		assets,

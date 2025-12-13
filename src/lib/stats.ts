@@ -4,6 +4,10 @@ export function calculateMean(nums: number[]) {
 	return nums.reduce((acc, num) => acc + num, 0) / nums.length;
 }
 
+export function calculateVariance(nums: number[], mean: number) {
+	return nums.reduce((acc, num) => acc + (num - mean) ** 2, 0) / nums.length;
+}
+
 export function calculateVolatility(returns: number[]) {
 	const mean = calculateMean(returns);
 	const variance =

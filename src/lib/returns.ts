@@ -1,6 +1,6 @@
 import { TRADING_DAYS_PER_MONTH, TRADING_DAYS_PER_YEAR } from './constants';
-import { calculatePercentile } from './stats';
-import type { ReturnStats, ReturnStatsWithStdDev } from './types';
+import { calculateMean, calculatePercentile, calculateVariance } from './stats';
+import type { ReturnStatsWithStdDev } from './types';
 
 // Continuously compounded (log) daily return stream
 export function calculateDailyLogReturns(prices: number[]) {
@@ -72,16 +72,13 @@ export function calculateGeometricAnnualPortfolioReturn(
 		// Sort for percentile calculations
 		const sortedReturns = [...annualReturns].sort((a, b) => a - b);
 
-		const average =
-			annualReturns.reduce((acc, ret) => acc + ret, 0) / numSimulations;
+		const average = calculateMean(annualReturns);
+		const variance = calculateVariance(annualReturns, average);
+		const stdDev = Math.sqrt(variance);
+
 		const median = calculatePercentile(sortedReturns, 50);
 		const p5 = calculatePercentile(sortedReturns, 5);
 		const p95 = calculatePercentile(sortedReturns, 95);
-
-		const variance =
-			annualReturns.reduce((acc, r) => acc + (r - average) ** 2, 0) /
-			numSimulations;
-		const stdDev = Math.sqrt(variance);
 
 		statsPerTime.push({ average, median, p5, p95, stdDev });
 	}
@@ -93,12 +90,12 @@ export function calculateGeometricAnnualPortfolioReturn(
 export function calculateSimpleTotalPortfolioReturn(
 	portfolioPaths: number[][],
 	monthlySIPAmount: number
-): ReturnStats[] {
+): ReturnStatsWithStdDev[] {
 	const initialAmount = portfolioPaths[0][0];
 	const numSimulations = portfolioPaths.length;
 	const numDays = portfolioPaths[0].length;
 
-	const statsPerTime: ReturnStats[] = [];
+	const statsPerTime: ReturnStatsWithStdDev[] = [];
 
 	for (
 		let day = TRADING_DAYS_PER_YEAR;
@@ -121,13 +118,15 @@ export function calculateSimpleTotalPortfolioReturn(
 		// Sort for percentile calculations
 		const sortedReturns = [...totalReturns].sort((a, b) => a - b);
 
-		const average =
-			totalReturns.reduce((acc, ret) => acc + ret, 0) / numSimulations;
+		const average = calculateMean(totalReturns);
+		const variance = calculateVariance(totalReturns, average);
+		const stdDev = Math.sqrt(variance);
+
 		const median = calculatePercentile(sortedReturns, 50);
 		const p5 = calculatePercentile(sortedReturns, 5);
 		const p95 = calculatePercentile(sortedReturns, 95);
 
-		statsPerTime.push({ average, median, p5, p95 });
+		statsPerTime.push({ average, median, p5, p95, stdDev });
 	}
 
 	return statsPerTime;

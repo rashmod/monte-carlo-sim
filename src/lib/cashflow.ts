@@ -1,5 +1,5 @@
 import { TRADING_DAYS_PER_MONTH, TRADING_DAYS_PER_YEAR } from './constants';
-import { calculatePercentile } from './stats';
+import { calculateMean, calculatePercentile, calculateVariance } from './stats';
 import type { CashflowTD, ReturnStatsWithStdDev } from './types';
 
 export function calculateXirr(
@@ -128,16 +128,13 @@ export function calculateXIRRStats(
 		// Sort for percentile calculations
 		const sortedXirr = [...xirrValues].sort((a, b) => a - b);
 
-		const average =
-			xirrValues.reduce((acc, ret) => acc + ret, 0) / xirrValues.length;
+		const average = calculateMean(xirrValues);
+		const variance = calculateVariance(xirrValues, average);
+		const stdDev = Math.sqrt(variance);
+
 		const median = calculatePercentile(sortedXirr, 50);
 		const p5 = calculatePercentile(sortedXirr, 5);
 		const p95 = calculatePercentile(sortedXirr, 95);
-
-		const variance =
-			xirrValues.reduce((acc, r) => acc + (r - average) ** 2, 0) /
-			xirrValues.length;
-		const stdDev = Math.sqrt(variance);
 
 		statsPerTime.push({ average, median, p5, p95, stdDev });
 	}

@@ -4,6 +4,7 @@ import {
 	calculateVolatility,
 	calculateMean,
 	annualizeSimpleMeanAndStd,
+	calculateVariance,
 } from './stats';
 import type { LossProbability, ReturnStatsWithStdDev } from './types';
 
@@ -154,15 +155,14 @@ export function calculateSharpeRatioStats(
 		if (sharpeValues.length === 0) continue;
 
 		const sortedSharpe = [...sharpeValues].sort((a, b) => a - b);
-		const average =
-			sharpeValues.reduce((acc, r) => acc + r, 0) / sharpeValues.length;
+
+		const average = calculateMean(sharpeValues);
+		const variance = calculateVariance(sharpeValues, average);
+		const stdDev = Math.sqrt(variance);
+
 		const median = calculatePercentile(sortedSharpe, 50);
 		const p5 = calculatePercentile(sortedSharpe, 5);
 		const p95 = calculatePercentile(sortedSharpe, 95);
-		const variance =
-			sharpeValues.reduce((acc, r) => acc + (r - average) ** 2, 0) /
-			sharpeValues.length;
-		const stdDev = Math.sqrt(variance);
 
 		statsPerTime.push({ average, median, p5, p95, stdDev });
 	}

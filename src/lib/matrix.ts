@@ -69,10 +69,6 @@ export function calculateCorrelation(x: number[], y: number[]) {
 }
 
 export function calculateCorrelationMatrix(assets: Asset[]) {
-	if (assets.length === 0) {
-		throw new Error('At least one asset is required');
-	}
-
 	const correlationMatrix = [];
 
 	for (let i = 0; i < assets.length; i++) {
@@ -102,10 +98,6 @@ export function calculateCorrelationMatrix(assets: Asset[]) {
 // Cholesky decomposition for symmetric positive-definite matrix
 export function choleskyDecomposition(correlationMatrix: number[][]) {
 	const n = correlationMatrix.length;
-
-	if (n === 0) {
-		throw new Error('Matrix must be non-empty');
-	}
 
 	const isSquare = correlationMatrix.every((row) => row.length === n);
 	if (!isSquare) {
