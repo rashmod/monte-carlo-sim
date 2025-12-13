@@ -1,4 +1,11 @@
 import {
+	asAssetWeight,
+	asLogReturnVolatility,
+	asMeanLogReturn,
+	asMeanSimpleReturn,
+	asPriceSeries,
+} from './brand';
+import {
 	calculateAnnualizedLogReturn,
 	calculateAnnualizedSimpleReturn,
 	calculateAnnualizedLogVolatility,
@@ -6,12 +13,9 @@ import {
 	calculateDailySimpleReturns,
 } from './returns';
 import { calculateMean, calculateVolatility } from './stats';
-import type { Asset, HistoricalData } from './types';
+import type { Asset } from './types';
 
-export function cleanHistoricalData(historicalData: string): {
-	data: HistoricalData[];
-	errors: string[];
-} {
+export function cleanHistoricalData(historicalData: string) {
 	if (historicalData.trim() === '') {
 		throw new Error('Historical data is empty');
 	}
@@ -37,7 +41,7 @@ export function cleanHistoricalData(historicalData: string): {
 		});
 
 	return {
-		data: cleanup.filter((data) => typeof data === 'object'),
+		data: asPriceSeries(cleanup.filter((data) => typeof data !== 'string')),
 		errors: cleanup.filter((data) => typeof data === 'string'),
 	};
 }
@@ -50,21 +54,23 @@ export function generateAsset(
 	if (name.trim() === '') {
 		throw new Error('Name is required');
 	}
-	if (weight <= 0 || weight > 1) {
-		throw new Error('Weight must be between 0 and 1');
-	}
+	const assetWeight = asAssetWeight(weight);
 
 	const cleanedHistoricalData = cleanHistoricalData(historicalData);
 	const dailyLogReturns = calculateDailyLogReturns(
-		cleanedHistoricalData.data.map((data) => data.price)
+		cleanedHistoricalData.data
 	);
 	const dailySimpleReturns = calculateDailySimpleReturns(
-		cleanedHistoricalData.data.map((data) => data.price)
+		cleanedHistoricalData.data
 	);
 
-	const dailyMeanLogReturn = calculateMean(dailyLogReturns);
-	const dailyMeanSimpleReturn = calculateMean(dailySimpleReturns);
-	const dailyLogReturnVolatility = calculateVolatility(dailyLogReturns);
+	const dailyMeanLogReturn = asMeanLogReturn(calculateMean(dailyLogReturns));
+	const dailyMeanSimpleReturn = asMeanSimpleReturn(
+		calculateMean(dailySimpleReturns)
+	);
+	const dailyLogReturnVolatility = asLogReturnVolatility(
+		calculateVolatility(dailyLogReturns)
+	);
 
 	const annualizedLogReturn =
 		calculateAnnualizedLogReturn(dailyMeanLogReturn);
@@ -77,7 +83,7 @@ export function generateAsset(
 
 	return {
 		name,
-		weight,
+		weight: assetWeight,
 		rawHistoricalData: historicalData,
 		historicalData: cleanedHistoricalData,
 		dailyLogReturns,
