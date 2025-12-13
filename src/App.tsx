@@ -595,13 +595,15 @@ function App() {
 										</th>
 										<th
 											colSpan={4}
-										className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
-											Total Portfolio Return (simple/arithmetic)
+											className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
+											Total Portfolio Return
+											(simple/arithmetic)
 										</th>
 										<th
 											colSpan={4}
-										className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
-											Annualized Return (geometric CAGR or XIRR)
+											className='px-4 py-2 text-center text-sm font-medium border-r border-gray-300'>
+											Annualized Return (geometric CAGR or
+											XIRR)
 										</th>
 										<th
 											colSpan={2}

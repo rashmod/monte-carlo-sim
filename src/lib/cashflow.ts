@@ -2,12 +2,12 @@ import { TRADING_DAYS_PER_MONTH, TRADING_DAYS_PER_YEAR } from './constants';
 import { calculatePercentile } from './stats';
 import type { CashflowTD, ReturnStatsWithStdDev } from './types';
 
-export function xirrTradingDays(
+export function calculateXirr(
 	cashflows: CashflowTD[],
 	guess = 0.1,
 	maxIterations = 100,
 	tolerance = 1e-7
-): number {
+) {
 	if (cashflows.length < 2) {
 		throw new Error('At least two cashflows are required.');
 	}
@@ -54,7 +54,7 @@ export function generateCashflowArray(
 	monthlySIPAmount: number
 ): CashflowTD[] {
 	const cashflows: CashflowTD[] = [];
-	const numMonths = simulation.length / TRADING_DAYS_PER_MONTH;
+	const numMonths = Math.floor(simulation.length / TRADING_DAYS_PER_MONTH);
 
 	// Initial investment at day 0
 	cashflows.push({
@@ -75,7 +75,7 @@ export function generateCashflowArray(
 		} else if (dayIndex < simulation.length) {
 			// Monthly SIP investment
 			cashflows.push({
-				dayIndex: dayIndex + 1,
+				dayIndex: dayIndex,
 				amount: -monthlySIPAmount,
 			});
 		}
@@ -96,7 +96,6 @@ export function generateCashflowArray(
 
 export function calculateXIRRStats(
 	portfolioPaths: number[][],
-	initialAmount: number,
 	monthlySIPAmount: number
 ): ReturnStatsWithStdDev[] {
 	const numSimulations = portfolioPaths.length;
@@ -116,36 +115,14 @@ export function calculateXIRRStats(
 			const simulationSlice = portfolioPaths[sim].slice(0, day + 1);
 
 			// Generate cashflows for this time period
-			const cashflows: CashflowTD[] = [];
-			const numMonths = Math.floor(day / TRADING_DAYS_PER_MONTH);
-
-			// Initial investment at day 0
-			cashflows.push({
-				dayIndex: 0,
-				amount: -initialAmount,
-			});
-
-			// Monthly SIP investments up to this time point
-			for (let i = 1; i <= numMonths; i++) {
-				const sipDayIndex = i * TRADING_DAYS_PER_MONTH;
-
-				if (sipDayIndex <= day) {
-					cashflows.push({
-						dayIndex: sipDayIndex,
-						amount: -monthlySIPAmount,
-					});
-				}
-			}
-
-			// Final value at this time point
-			cashflows.push({
-				dayIndex: day,
-				amount: simulationSlice[day],
-			});
+			const cashflows = generateCashflowArray(
+				simulationSlice,
+				monthlySIPAmount
+			);
 
 			// Calculate XIRR for this simulation at this time point
 			try {
-				const xirr = xirrTradingDays(cashflows);
+				const xirr = calculateXirr(cashflows);
 				xirrValues.push(xirr);
 			} catch (error) {
 				// Skip invalid XIRR calculations
@@ -174,4 +151,3 @@ export function calculateXIRRStats(
 
 	return statsPerTime;
 }
-
