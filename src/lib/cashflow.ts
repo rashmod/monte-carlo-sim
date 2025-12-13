@@ -8,13 +8,6 @@ export function calculateXirr(
 	maxIterations = 100,
 	tolerance = 1e-7
 ) {
-	if (cashflows.length < 2) {
-		throw new Error('At least two cashflows are required.');
-	}
-
-	// Sort by dayIndex
-	cashflows = [...cashflows].sort((a, b) => a.dayIndex - b.dayIndex);
-
 	const d0 = cashflows[0].dayIndex;
 
 	const f = (r: number) =>
@@ -52,7 +45,7 @@ export function calculateXirr(
 export function generateCashflowArray(
 	simulation: number[],
 	monthlySIPAmount: number
-): CashflowTD[] {
+) {
 	const cashflows: CashflowTD[] = [];
 	const numMonths = Math.floor(simulation.length / TRADING_DAYS_PER_MONTH);
 

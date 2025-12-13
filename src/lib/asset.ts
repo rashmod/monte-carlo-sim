@@ -1,11 +1,4 @@
 import {
-	asAssetWeight,
-	asLogReturnVolatility,
-	asMeanLogReturn,
-	asMeanSimpleReturn,
-	asPriceSeries,
-} from './brand';
-import {
 	calculateAnnualizedLogReturn,
 	calculateAnnualizedSimpleReturn,
 	calculateAnnualizedLogVolatility,
@@ -40,8 +33,27 @@ export function cleanHistoricalData(historicalData: string) {
 			return { date: dateObj, price: Number(price) };
 		});
 
+	const data = cleanup.filter((data) => typeof data !== 'string');
+	if (data.length < 3) {
+		throw new Error('At least three data points are required');
+	}
+	for (const dataPoint of data) {
+		if (isNaN(dataPoint.price)) {
+			throw new Error('Price is not a number');
+		}
+		if (!Number.isFinite(dataPoint.price)) {
+			throw new Error('Price is not a finite number');
+		}
+		if (dataPoint.price <= 0) {
+			throw new Error('Price is not a positive number');
+		}
+		if (isNaN(dataPoint.date.getTime())) {
+			throw new Error('Date is not a number');
+		}
+	}
+
 	return {
-		data: asPriceSeries(cleanup.filter((data) => typeof data !== 'string')),
+		data,
 		errors: cleanup.filter((data) => typeof data === 'string'),
 	};
 }
@@ -54,23 +66,31 @@ export function generateAsset(
 	if (name.trim() === '') {
 		throw new Error('Name is required');
 	}
-	const assetWeight = asAssetWeight(weight);
+
+	if (isNaN(weight)) {
+		throw new Error('Weight is not a number');
+	}
+	if (!Number.isFinite(weight)) {
+		throw new Error('Weight is not a finite number');
+	}
+	if (weight < 0) {
+		throw new Error('Weight is not a positive number');
+	}
+	if (weight > 1) {
+		throw new Error('Weight is not a less than or equal to 1');
+	}
 
 	const cleanedHistoricalData = cleanHistoricalData(historicalData);
 	const dailyLogReturns = calculateDailyLogReturns(
-		cleanedHistoricalData.data
+		cleanedHistoricalData.data.map((data) => data.price)
 	);
 	const dailySimpleReturns = calculateDailySimpleReturns(
-		cleanedHistoricalData.data
+		cleanedHistoricalData.data.map((data) => data.price)
 	);
 
-	const dailyMeanLogReturn = asMeanLogReturn(calculateMean(dailyLogReturns));
-	const dailyMeanSimpleReturn = asMeanSimpleReturn(
-		calculateMean(dailySimpleReturns)
-	);
-	const dailyLogReturnVolatility = asLogReturnVolatility(
-		calculateVolatility(dailyLogReturns)
-	);
+	const dailyMeanLogReturn = calculateMean(dailyLogReturns);
+	const dailyMeanSimpleReturn = calculateMean(dailySimpleReturns);
+	const dailyLogReturnVolatility = calculateVolatility(dailyLogReturns);
 
 	const annualizedLogReturn =
 		calculateAnnualizedLogReturn(dailyMeanLogReturn);
@@ -83,7 +103,7 @@ export function generateAsset(
 
 	return {
 		name,
-		weight: assetWeight,
+		weight,
 		rawHistoricalData: historicalData,
 		historicalData: cleanedHistoricalData,
 		dailyLogReturns,

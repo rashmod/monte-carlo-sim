@@ -1,14 +1,3 @@
-import type {
-	AssetWeight,
-	AnnualizedLogReturn,
-	AnnualizedSimpleReturn,
-	LogReturnSeries,
-	LogReturnVolatility,
-	MeanLogReturn,
-	SimpleReturnSeries,
-	AnnualizedLogReturnVolatility,
-} from './brand';
-
 export type HistoricalData = {
 	date: Date;
 	price: number;
@@ -16,16 +5,16 @@ export type HistoricalData = {
 
 export type Asset = {
 	name: string;
-	weight: AssetWeight;
+	weight: number;
 	rawHistoricalData: string;
 	historicalData: { data: HistoricalData[]; errors: string[] }; // daily
-	dailyLogReturns: LogReturnSeries; // continuously compounded
-	dailySimpleReturns: SimpleReturnSeries; // arithmetic/simple
-	dailyMeanLogReturn: MeanLogReturn; // mean log return
-	dailyLogReturnVolatility: LogReturnVolatility; // std dev of log returns
-	annualizedLogReturn: AnnualizedLogReturn; // annualized log return
-	annualizedSimpleReturn: AnnualizedSimpleReturn; // annualized simple return
-	annualizedLogReturnVolatility: AnnualizedLogReturnVolatility; // annualized vol of log returns
+	dailyLogReturns: number[]; // continuously compounded
+	dailySimpleReturns: number[]; // arithmetic/simple
+	dailyMeanLogReturn: number; // mean log return
+	dailyLogReturnVolatility: number; // std dev of log returns
+	annualizedLogReturn: number; // annualized log return
+	annualizedSimpleReturn: number; // annualized simple return
+	annualizedLogReturnVolatility: number; // annualized vol of log returns
 };
 
 // Return stats represent simple (arithmetic) nominal returns unless noted

@@ -1,9 +1,6 @@
 import { TRADING_DAYS_PER_YEAR } from './constants';
 
 export function calculateMean(nums: number[]) {
-	if (nums.length === 0) {
-		throw new Error('Array must contain at least one element');
-	}
 	return nums.reduce((acc, num) => acc + num, 0) / nums.length;
 }
 

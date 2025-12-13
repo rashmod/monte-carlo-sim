@@ -1,64 +1,45 @@
-import {
-	asAnnualizedLogReturn,
-	asAnnualizedSimpleReturn,
-	asAnnualizedLogReturnVolatility,
-	asLogReturnSeries,
-	asSimpleReturnSeries,
-	type LogReturnVolatility,
-	type MeanLogReturn,
-	type MeanSimpleReturn,
-	type PriceSeries,
-} from './brand';
 import { TRADING_DAYS_PER_MONTH, TRADING_DAYS_PER_YEAR } from './constants';
 import { calculatePercentile } from './stats';
 import type { ReturnStats, ReturnStatsWithStdDev } from './types';
 
 // Continuously compounded (log) daily return stream
-export function calculateDailyLogReturns(prices: PriceSeries) {
-	const dailyReturns = [];
-
-	for (let i = 1; i < prices.length; i++) {
-		dailyReturns.push(Math.log(prices[i].price / prices[i - 1].price));
+export function calculateDailyLogReturns(prices: number[]) {
+	if (prices.length < 3) {
+		throw new Error('At least three prices are required');
 	}
-	return asLogReturnSeries(dailyReturns);
+
+	const dailyReturns = [];
+	for (let i = 1; i < prices.length; i++) {
+		dailyReturns.push(Math.log(prices[i] / prices[i - 1]));
+	}
+	return dailyReturns;
 }
 
 // Arithmetic/simple daily return stream
-export function calculateDailySimpleReturns(prices: PriceSeries) {
-	const dailyReturns = [];
-
-	for (let i = 1; i < prices.length; i++) {
-		dailyReturns.push(
-			(prices[i].price - prices[i - 1].price) / prices[i - 1].price
-		);
+export function calculateDailySimpleReturns(prices: number[]) {
+	if (prices.length < 3) {
+		throw new Error('At least three prices are required');
 	}
-	return asSimpleReturnSeries(dailyReturns);
+
+	const dailyReturns = [];
+	for (let i = 1; i < prices.length; i++) {
+		dailyReturns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+	}
+	return dailyReturns;
 }
 
 // Annualized continuously compounded return from avg daily log return
-export function calculateAnnualizedLogReturn(
-	averageDailyLogReturn: MeanLogReturn
-) {
-	return asAnnualizedLogReturn(
-		Math.E ** (averageDailyLogReturn * TRADING_DAYS_PER_YEAR) - 1
-	);
+export function calculateAnnualizedLogReturn(meanDailyLogReturn: number) {
+	return Math.E ** (meanDailyLogReturn * TRADING_DAYS_PER_YEAR) - 1;
 }
 
 // Annualized simple return from avg daily arithmetic return
-export function calculateAnnualizedSimpleReturn(
-	averageDailySimpleReturn: MeanSimpleReturn
-) {
-	return asAnnualizedSimpleReturn(
-		(1 + averageDailySimpleReturn) ** TRADING_DAYS_PER_YEAR - 1
-	);
+export function calculateAnnualizedSimpleReturn(meanDailySimpleReturn: number) {
+	return (1 + meanDailySimpleReturn) ** TRADING_DAYS_PER_YEAR - 1;
 }
 
-export function calculateAnnualizedLogVolatility(
-	dailyLogVolatility: LogReturnVolatility
-) {
-	return asAnnualizedLogReturnVolatility(
-		dailyLogVolatility * Math.sqrt(TRADING_DAYS_PER_YEAR)
-	);
+export function calculateAnnualizedLogVolatility(dailyLogVolatility: number) {
+	return dailyLogVolatility * Math.sqrt(TRADING_DAYS_PER_YEAR);
 }
 
 // Geometric annualized portfolio return (CAGR) across simulations
@@ -111,9 +92,9 @@ export function calculateGeometricAnnualPortfolioReturn(
 // Simple (arithmetic) total portfolio return relative to contributed capital
 export function calculateSimpleTotalPortfolioReturn(
 	portfolioPaths: number[][],
-	initialAmount: number,
 	monthlySIPAmount: number
 ): ReturnStats[] {
+	const initialAmount = portfolioPaths[0][0];
 	const numSimulations = portfolioPaths.length;
 	const numDays = portfolioPaths[0].length;
 

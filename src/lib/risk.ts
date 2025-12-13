@@ -10,9 +10,9 @@ import type { LossProbability, ReturnStatsWithStdDev } from './types';
 export function calculateProbabilityOfLoss(
 	portfolioPaths: number[][],
 	inflationRate: number,
-	initialAmount: number,
 	monthlySipAmount: number
 ): LossProbability[] {
+	const initialAmount = portfolioPaths[0][0];
 	const numSimulations = portfolioPaths.length;
 	const numDays = portfolioPaths[0].length;
 

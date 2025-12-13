@@ -14,8 +14,8 @@ export function runSimulation(
 	assets: Asset[],
 	numOfYears: number,
 	numOfSimulation: number,
-	initialValue = 10000,
-	monthlySIPAmount = 0
+	initialValue: number,
+	monthlySIPAmount: number
 ) {
 	const correlationMatrix = calculateCorrelationMatrix(assets);
 	const choleskyMatrix = choleskyDecomposition(correlationMatrix);
@@ -34,7 +34,7 @@ export function runSimulation(
 			};
 		});
 
-		const portfolioPath = [initialValue];
+		const portfolioPath: number[] = [initialValue];
 
 		for (let t = 0; t < timeSteps; t++) {
 			const correlatedRandoms = generateCorrelatedRandom(choleskyMatrix);

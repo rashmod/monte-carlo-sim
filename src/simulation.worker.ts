@@ -17,10 +17,28 @@ self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
 		assets,
 		numYears,
 		numSimulations,
-		inflationRate,
 		initialAmount,
 		monthlySIPAmount,
+		inflationRate,
 	} = e.data;
+
+	if (numYears < 1) {
+		throw new Error('Number of years must be greater than 1');
+	}
+	if (numSimulations < 1) {
+		throw new Error('Number of simulations must be greater than 1');
+	}
+	if (initialAmount < 1) {
+		throw new Error('Initial amount must be greater than 1');
+	}
+	if (monthlySIPAmount < 0) {
+		throw new Error(
+			'Monthly SIP amount must be greater than or equal to 0'
+		);
+	}
+	if (inflationRate < 0) {
+		throw new Error('Inflation rate must be greater than or equal to 0');
+	}
 
 	const sim = runSimulation(
 		assets,
@@ -36,13 +54,11 @@ self.onmessage = (e: MessageEvent<SimulationWorkerMessage>) => {
 			: calculateXIRRStats(sim, monthlySIPAmount);
 	const portfolio = calculateSimpleTotalPortfolioReturn(
 		sim,
-		initialAmount,
 		monthlySIPAmount
 	);
 	const probLoss = calculateProbabilityOfLoss(
 		sim,
 		inflationRate,
-		initialAmount,
 		monthlySIPAmount
 	);
 	const drawdown = calculateDrawdownStats(sim);

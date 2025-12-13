@@ -17,10 +17,6 @@ export function alignPrices(
 	assetA: HistoricalData[],
 	assetB: HistoricalData[]
 ) {
-	if (assetA.length === 0 || assetB.length === 0) {
-		throw new Error('One of the assets has no prices');
-	}
-
 	let i = 0,
 		j = 0;
 	const aligned = [];
